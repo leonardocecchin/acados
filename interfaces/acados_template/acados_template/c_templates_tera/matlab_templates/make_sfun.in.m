@@ -157,6 +157,7 @@ COMPFLAGS = [COMPFLAGS ' {{ acados_link_libs.openmp }}'];
 LIBS{end+1} = '{{ acados_link_libs.qpoases }}';
 LIBS{end+1} = '{{ acados_link_libs.hpmpc }}';
 LIBS{end+1} = '{{ acados_link_libs.osqp }}';
+LIBS{end+1} = '{{ acados_link_libs.daqp }}';
 {%- else %}
     {% if solver_options.qp_solver is containing("QPOASES") %}
 LIBS{end+1} = '-lqpOASES_e';
