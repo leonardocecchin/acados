@@ -1,8 +1,5 @@
 %
-% Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-% Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-% Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-% Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+% Copyright (c) The acados authors.
 %
 % This file is part of acados.
 %
@@ -29,17 +26,18 @@
 % CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 % ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 % POSSIBILITY OF SUCH DAMAGE.;
+
 %
 
 classdef {{ model.name }}_mex_solver < handle
 
     properties
         C_ocp
-        C_ocp_ext_fun
         cost_ext_fun_type
         cost_ext_fun_type_e
         N
         name
+        code_gen_dir
     end % properties
 
 
@@ -49,20 +47,26 @@ classdef {{ model.name }}_mex_solver < handle
         % constructor
         function obj = {{ model.name }}_mex_solver()
             make_mex_{{ model.name }}();
-            [obj.C_ocp, obj.C_ocp_ext_fun] = acados_mex_create_{{ model.name }}();
+            obj.C_ocp = acados_mex_create_{{ model.name }}();
             % to have path to destructor when changing directory
             addpath('.')
             obj.cost_ext_fun_type = '{{ cost.cost_ext_fun_type }}';
             obj.cost_ext_fun_type_e = '{{ cost.cost_ext_fun_type_e }}';
             obj.N = {{ dims.N }};
             obj.name = '{{ model.name }}';
+            obj.code_gen_dir = pwd();
         end
 
         % destructor
         function delete(obj)
+            disp("delete template...");
+            return_dir = pwd();
+            cd(obj.code_gen_dir);
             if ~isempty(obj.C_ocp)
                 acados_mex_free_{{ model.name }}(obj.C_ocp);
             end
+            cd(return_dir);
+            disp("done.");
         end
 
         % solve
@@ -70,7 +74,7 @@ classdef {{ model.name }}_mex_solver < handle
             acados_mex_solve_{{ model.name }}(obj.C_ocp);
         end
 
-        % set -- borrowed from MEX interface
+        % set
         function set(varargin)
             obj = varargin{1};
             field = varargin{2};
@@ -79,10 +83,10 @@ classdef {{ model.name }}_mex_solver < handle
                 error('field must be a char vector, use '' ''');
             end
             if nargin==3
-                acados_mex_set_{{ model.name }}(obj.cost_ext_fun_type, obj.cost_ext_fun_type_e, obj.C_ocp, obj.C_ocp_ext_fun, field, value);
+                acados_mex_set_{{ model.name }}(obj.cost_ext_fun_type, obj.cost_ext_fun_type_e, obj.C_ocp, field, value);
             elseif nargin==4
                 stage = varargin{4};
-                acados_mex_set_{{ model.name }}(obj.cost_ext_fun_type, obj.cost_ext_fun_type_e, obj.C_ocp, obj.C_ocp_ext_fun, field, value, stage);
+                acados_mex_set_{{ model.name }}(obj.cost_ext_fun_type, obj.cost_ext_fun_type_e, obj.C_ocp, field, value, stage);
             else
                 disp('acados_ocp.set: wrong number of input arguments (2 or 3 allowed)');
             end

@@ -1,8 +1,5 @@
 #
-# Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-# Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-# Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-# Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+# Copyright (c) The acados authors.
 #
 # This file is part of acados.
 #
@@ -32,9 +29,9 @@
 #
 
 import os
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+from acados_template import latexify_plot
 
 def plot_pendulum(shooting_nodes, u_max, U, X_true, X_est=None, Y_measured=None, latexify=False, plt_show=True, X_true_label=None):
     """
@@ -48,20 +45,8 @@ def plot_pendulum(shooting_nodes, u_max, U, X_true, X_est=None, Y_measured=None,
         latexify: latex style plots
     """
 
-    # latexify plot
     if latexify:
-        params = {'backend': 'ps',
-                'text.latex.preamble': r"\usepackage{gensymb} \usepackage{amsmath}",
-                'axes.labelsize': 10,
-                'axes.titlesize': 10,
-                'legend.fontsize': 10,
-                'xtick.labelsize': 10,
-                'ytick.labelsize': 10,
-                'text.usetex': True,
-                'font.family': 'serif'
-        }
-
-        matplotlib.rcParams.update(params)
+        latexify_plot()
 
     WITH_ESTIMATION = X_est is not None and Y_measured is not None
 

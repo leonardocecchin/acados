@@ -1,9 +1,6 @@
 # -*- coding: future_fstrings -*-
 #
-# Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-# Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-# Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-# Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+# Copyright (c) The acados authors.
 #
 # This file is part of acados.
 #
@@ -32,25 +29,28 @@
 # POSSIBILITY OF SUCH DAMAGE.;
 #
 
-import sys
-import os
-import json
 import importlib
+import json
+import os
+import sys
+from copy import deepcopy
+from ctypes import (CDLL, POINTER, byref, c_bool, c_char_p, c_double, c_int,
+                    c_void_p, cast)
 
 import numpy as np
 
-from ctypes import POINTER, cast, CDLL, c_void_p, c_char_p, c_double, c_int, c_bool, byref
-from copy import deepcopy
-
-from .casadi_function_generation import generate_c_code_implicit_ode, generate_c_code_gnsf, generate_c_code_explicit_ode
-from .acados_sim import AcadosSim
 from .acados_ocp import AcadosOcp
-from .utils import is_column, render_template, format_class_dict, make_object_json_dumpable,\
-     make_model_consistent, set_up_imported_gnsf_model, get_python_interface_path, get_lib_ext,\
-     casadi_length, is_empty, check_casadi_version
+from .acados_sim import AcadosSim
 from .builders import CMakeBuilder
+from .casadi_function_generation import (generate_c_code_explicit_ode,
+                                         generate_c_code_gnsf,
+                                         generate_c_code_implicit_ode)
 from .gnsf.detect_gnsf_structure import detect_gnsf_structure
-
+from .utils import (casadi_length, check_casadi_version, format_class_dict,
+                    get_lib_ext, get_python_interface_path, is_column,
+                    is_empty, make_model_consistent, make_object_json_dumpable,
+                    render_template, set_up_imported_gnsf_model,
+                    verbose_system_call)
 
 
 def make_sim_dims_consistent(acados_sim: AcadosSim):
@@ -82,6 +82,10 @@ def make_sim_dims_consistent(acados_sim: AcadosSim):
     if acados_sim.parameter_values.shape[0] != dims.np:
         raise Exception('inconsistent dimension np, regarding model.p and parameter_values.' + \
             f'\nGot np = {dims.np}, acados_sim.parameter_values.shape = {acados_sim.parameter_values.shape[0]}\n')
+
+    # check required arguments are given
+    if acados_sim.solver_options.T is None:
+        raise Exception('acados_sim.solver_options.T is None, should be provided.')
 
 
 def get_sim_layout():
@@ -201,8 +205,7 @@ class AcadosSimSolver:
             `MS Visual Studio`); default: `None`
     """
     if sys.platform=="win32":
-        from ctypes import wintypes
-        from ctypes import WinDLL
+        from ctypes import WinDLL, wintypes
         dlclose = WinDLL('kernel32', use_last_error=True).FreeLibrary
         dlclose.argtypes = [wintypes.HMODULE]
     else:
@@ -241,18 +244,18 @@ class AcadosSimSolver:
 
 
     @classmethod
-    def build(cls, code_export_dir, with_cython=False, cmake_builder: CMakeBuilder = None):
+    def build(cls, code_export_dir, with_cython=False, cmake_builder: CMakeBuilder = None, verbose: bool = True):
         # Compile solver
         cwd = os.getcwd()
         os.chdir(code_export_dir)
         if with_cython:
-            os.system('make clean_sim_cython')
-            os.system('make sim_cython')
+            verbose_system_call(['make', 'clean_sim_cython'], verbose)
+            verbose_system_call(['make', 'sim_cython'], verbose)
         else:
             if cmake_builder is not None:
-                cmake_builder.exec(code_export_dir)
+                cmake_builder.exec(code_export_dir, verbose)
             else:
-                os.system('make sim_shared_lib')
+                verbose_system_call(['make', 'sim_shared_lib'], verbose)
         os.chdir(cwd)
 
 
@@ -265,13 +268,13 @@ class AcadosSimSolver:
         code_export_directory = acados_sim_json['code_export_directory']
 
         importlib.invalidate_caches()
-        rel_code_export_directory = os.path.relpath(code_export_directory)
-        acados_sim_solver_pyx = importlib.import_module(f'{rel_code_export_directory}.acados_sim_solver_pyx')
+        sys.path.append(os.path.dirname(code_export_directory))
+        acados_sim_solver_pyx = importlib.import_module(f'{os.path.split(code_export_directory)[1]}.acados_sim_solver_pyx')
 
         AcadosSimSolverCython = getattr(acados_sim_solver_pyx, 'AcadosSimSolverCython')
         return AcadosSimSolverCython(acados_sim_json['model']['name'])
 
-    def __init__(self, acados_sim, json_file='acados_sim.json', generate=True, build=True, cmake_builder: CMakeBuilder = None):
+    def __init__(self, acados_sim: AcadosSim, json_file='acados_sim.json', generate=True, build=True, cmake_builder: CMakeBuilder = None, verbose: bool = True):
 
         self.solver_created = False
         self.acados_sim = acados_sim
@@ -285,7 +288,7 @@ class AcadosSimSolver:
             self.generate(acados_sim, json_file=json_file, cmake_builder=cmake_builder)
 
         if build:
-            self.build(code_export_dir, cmake_builder=cmake_builder)
+            self.build(code_export_dir, cmake_builder=cmake_builder, verbose=verbose)
 
         # prepare library loading
         lib_prefix = 'lib'
@@ -306,10 +309,11 @@ class AcadosSimSolver:
             self.__acados_lib_uses_omp = getattr(self.__acados_lib, 'omp_get_thread_num') is not None
         except AttributeError as e:
             self.__acados_lib_uses_omp = False
-        if self.__acados_lib_uses_omp:
-            print('acados was compiled with OpenMP.')
-        else:
-            print('acados was compiled without OpenMP.')
+        if verbose:
+            if self.__acados_lib_uses_omp:
+                print('acados was compiled with OpenMP.')
+            else:
+                print('acados was compiled without OpenMP.')
         libacados_sim_solver_name = f'{lib_prefix}acados_sim_solver_{self.model_name}{lib_ext}'
         self.shared_lib_name = os.path.join(code_export_dir, libacados_sim_solver_name)
 

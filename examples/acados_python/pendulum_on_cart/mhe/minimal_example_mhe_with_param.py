@@ -1,9 +1,6 @@
 # -*- coding: future_fstrings -*-
 #
-# Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-# Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-# Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-# Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+# Copyright (c) The acados authors.
 #
 # This file is part of acados.
 #
@@ -42,8 +39,6 @@ from export_ocp_solver import export_ocp_solver
 from export_mhe_solver_with_param import export_mhe_solver_with_param
 
 import numpy as np
-from scipy.linalg import block_diag
-
 from utils import plot_pendulum
 
 
@@ -145,7 +140,7 @@ for i in range(N):
     simXest[i,:] = x_augmented[0:nx]
     sim_l_est[i,:] = x_augmented[nx]
     simWest[i,:] = acados_solver_mhe.get(i, "u")
-    
+
 x_augmented = acados_solver_mhe.get(N, "x")
 simXest[N,:] = x_augmented[0:nx]
 sim_l_est[N,:] = x_augmented[nx]

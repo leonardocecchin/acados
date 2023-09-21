@@ -1,8 +1,5 @@
 %
-% Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-% Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-% Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-% Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+% Copyright (c) The acados authors.
 %
 % This file is part of acados.
 %
@@ -29,6 +26,7 @@
 % CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 % ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 % POSSIBILITY OF SUCH DAMAGE.;
+
 %
 
 %% test of native matlab interface
@@ -51,11 +49,6 @@ constr_vals = zeros(N, ncases);
 for i = 1:3
     %% arguments
     compile_interface = 'auto';
-    if ~is_octave && exist('build/ocp_create.mexa64', 'file')
-        compile_interface = 'auto';
-    elseif is_octave && exist('build/ocp_create.mex', 'file')
-        compile_interface = 'auto';
-    end
 
     codgen_model = 'true';
     gnsf_detect_struct = 'true';

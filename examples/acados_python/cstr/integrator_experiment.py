@@ -1,9 +1,6 @@
 # -*- coding: future_fstrings -*-
 #
-# Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-# Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-# Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-# Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+# Copyright (c) The acados authors.
 #
 # This file is part of acados.
 #
@@ -34,16 +31,17 @@
 
 # authors: Katrin Baumgaertner, Jonathan Frey
 
-from cstr_model import CSTRParameters, setup_cstr_model, setup_linearized_model
+from cstr_model import CSTRParameters, setup_cstr_model
 from setup_acados_ocp_solver import MpcCSTRParameters
 from setup_acados_integrator import setup_acados_integrator
+from setup_acados_ocp_solver import setup_acados_ocp_solver
 import numpy as np
-from cstr_utils import plot_cstr, latexify
 from matplotlib.lines import Line2D
 import matplotlib.pyplot as plt
-from setup_acados_ocp_solver import setup_acados_ocp_solver
 from main import simulate
+from acados_template import latexify_plot
 
+latexify_plot()
 
 def main():
     SAVE_FIG = True
@@ -103,7 +101,6 @@ def main():
     U_all = [U_exact]
     labels_all = ["exact"]
 
-    latexify()
     plt.figure()
 
     if integrator_type == "ERK":

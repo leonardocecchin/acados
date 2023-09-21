@@ -1,8 +1,5 @@
 /*
- * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
- * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
- * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
- * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+ * Copyright (c) The acados authors.
  *
  * This file is part of acados.
  *
@@ -491,10 +488,6 @@ static void ocp_nlp_sqp_rti_feedback_step(ocp_nlp_config *config, ocp_nlp_dims *
     mem->time_qp_solver_call = 0.0;
     mem->time_qp_xcond = 0.0;
     mem->time_glob = 0.0;
-
-    // embed initial value (this actually updates all bounds at stage 0...)
-    ocp_nlp_embed_initial_value(config, dims, nlp_in,
-        nlp_out, nlp_opts, nlp_mem, nlp_work);
 
     // update QP rhs for SQP (step prim var, abs dual var)
     ocp_nlp_approximate_qp_vectors_sqp(config, dims, nlp_in,

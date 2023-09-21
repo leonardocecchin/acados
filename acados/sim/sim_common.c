@@ -1,8 +1,5 @@
 /*
- * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
- * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
- * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
- * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+ * Copyright (c) The acados authors.
  *
  * This file is part of acados.
  *
@@ -439,6 +436,11 @@ void sim_opts_set_(sim_opts *opts, const char *field, void *value)
         bool *jac_reuse = (bool *) value;
         opts->jac_reuse = *jac_reuse;
     }
+    else if (!strcmp(field, "cost_computation"))
+    {
+        bool *cost_computation = (bool *) value;
+        opts->cost_computation = *cost_computation;
+    }
     else if (!strcmp(field, "sens_forw"))
     {
         bool *sens_forw = (bool *) value;
@@ -506,6 +508,11 @@ void sim_opts_get_(sim_config *config, sim_opts *opts, const char *field, void *
     {
         bool *sens_hess = value;
         *sens_hess = opts->sens_hess;
+    }
+    else if (!strcmp(field, "cost_computation"))
+    {
+        int *int_ptr = value;
+        *int_ptr = opts->cost_computation;
     }
     else
     {

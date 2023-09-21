@@ -1,9 +1,6 @@
 # -*- coding: future_fstrings -*-
 #
-# Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-# Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-# Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-# Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+# Copyright (c) The acados authors.
 #
 # This file is part of acados.
 #
@@ -32,13 +29,17 @@
 # POSSIBILITY OF SUCH DAMAGE.;
 #
 
-import os, sys, json
-import urllib.request
+import json
+import os
 import shutil
-import numpy as np
-from casadi import SX, MX, DM, Function, CasadiMeta
+import sys
+import urllib.request
+from subprocess import DEVNULL, STDOUT, call
 
-ALLOWED_CASADI_VERSIONS = ('3.5.6', '3.5.5', '3.5.4', '3.5.3', '3.5.2', '3.5.1', '3.4.5', '3.4.0')
+import numpy as np
+from casadi import DM, MX, SX, CasadiMeta, Function
+
+ALLOWED_CASADI_VERSIONS = ('3.6.3', '3.5.6', '3.5.5', '3.5.4', '3.5.3', '3.5.2', '3.5.1', '3.4.5', '3.4.0')
 
 TERA_VERSION = "0.0.34"
 
@@ -272,12 +273,21 @@ def format_class_dict(d):
     return out
 
 
-def get_ocp_nlp_layout():
+def get_ocp_nlp_layout() -> dict:
     python_interface_path = get_python_interface_path()
     abs_path = os.path.join(python_interface_path, 'acados_layout.json')
     with open(abs_path, 'r') as f:
         ocp_nlp_layout = json.load(f)
     return ocp_nlp_layout
+
+
+def get_default_simulink_opts() -> dict:
+    python_interface_path = get_python_interface_path()
+    abs_path = os.path.join(python_interface_path, 'simulink_default_opts.json')
+    with open(abs_path, 'r') as f:
+        simulink_opts = json.load(f)
+    return simulink_opts
+
 
 def J_to_idx(J):
     nrows = J.shape[0]
@@ -427,3 +437,12 @@ def idx_perm_to_ipiv(idx_perm):
 def print_casadi_expression(f):
     for ii in range(casadi_length(f)):
         print(f[ii,:])
+
+
+def verbose_system_call(cmd, verbose=True, shell=False):
+    return call(
+        cmd,
+        stdout=None if verbose else DEVNULL,
+        stderr=None if verbose else STDOUT,
+        shell=shell
+    )

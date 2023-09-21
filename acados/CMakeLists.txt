@@ -1,8 +1,5 @@
 #
-# Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-# Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-# Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-# Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+# Copyright (c) The acados authors.
 #
 # This file is part of acados.
 #
@@ -74,7 +71,7 @@ add_library(acados ${ACADOS_SRC})
 
 target_include_directories(acados
     PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}> # to be able to include "acados/header.h"
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}> # to be able to include "acados/header.h"
         $<BUILD_INTERFACE:${EXTERNAL_SRC_DIR}/qore/QPSOLVER_DENSE/include>
         $<BUILD_INTERFACE:${EXTERNAL_SRC_DIR}/qore/QPSOLVER_DENSE/source>
         $<BUILD_INTERFACE:${EXTERNAL_SRC_DIR}/qore/KKTPACK_DENSE/include>
@@ -83,7 +80,7 @@ target_include_directories(acados
         $<BUILD_INTERFACE:${EXTERNAL_SRC_DIR}/qore>
         $<BUILD_INTERFACE:${EXTERNAL_SRC_DIR}/hpipm/include>
         $<BUILD_INTERFACE:${EXTERNAL_SRC_DIR}>
-        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/interfaces>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/interfaces>
         $<INSTALL_INTERFACE:include>)
 
 # OPENMP

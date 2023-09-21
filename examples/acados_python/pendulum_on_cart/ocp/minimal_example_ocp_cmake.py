@@ -1,9 +1,6 @@
 # -*- coding: future_fstrings -*-
 #
-# Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-# Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-# Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-# Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+# Copyright (c) The acados authors.
 #
 # This file is part of acados.
 #
@@ -36,7 +33,6 @@ import sys
 sys.path.insert(0, '../common')
 
 from acados_template import AcadosOcp, AcadosOcpSolver, ocp_get_default_cmake_builder
-from acados_template.builders import CMakeBuilder
 from pendulum_model import export_pendulum_ode_model
 import numpy as np
 import scipy.linalg
@@ -123,4 +119,4 @@ simX[N,:] = ocp_solver.get(N, "x")
 
 ocp_solver.print_statistics() # encapsulates: stat = ocp_solver.get_stats("statistics")
 
-plot_pendulum(np.linspace(0, Tf, N+1), Fmax, simU, simX, latexify=False)
+plot_pendulum(np.linspace(0, Tf, N+1), Fmax, simU, simX, latexify=True)

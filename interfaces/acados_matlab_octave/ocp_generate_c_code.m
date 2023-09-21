@@ -1,8 +1,5 @@
 %
-% Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-% Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-% Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-% Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+% Copyright (c) The acados authors.
 %
 % This file is part of acados.
 %
@@ -29,6 +26,7 @@
 % CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 % ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 % POSSIBILITY OF SUCH DAMAGE.;
+
 %
 
 function ocp_generate_c_code(obj)
@@ -106,6 +104,7 @@ function ocp_generate_c_code(obj)
 
     constr = obj.acados_ocp_nlp_json.constraints;
     props = fieldnames(constr);
+    disable_last_warning();  % show warning for struct conversion only once
     for iprop = 1:length(props)
         this_prop = props{iprop};
         % add logic here if you want to work with select properties
@@ -248,12 +247,11 @@ function ocp_generate_c_code(obj)
     % if is_octave()
         % savejson does not work for classes!
         % -> consider making the acados_ocp_nlp_json properties structs directly.
-        ocp_json_struct = struct(obj.acados_ocp_nlp_json);
-        disable_last_warning();
-        ocp_json_struct.dims = struct(ocp_json_struct.dims);
-        ocp_json_struct.cost = struct(ocp_json_struct.cost);
-        ocp_json_struct.constraints = struct(ocp_json_struct.constraints);
-        ocp_json_struct.solver_options = struct(ocp_json_struct.solver_options);
+        ocp_json_struct = obj.acados_ocp_nlp_json.struct();
+        ocp_json_struct.dims = ocp_json_struct.dims.struct();
+        ocp_json_struct.cost = ocp_json_struct.cost.struct();
+        ocp_json_struct.constraints = ocp_json_struct.constraints.struct();
+        ocp_json_struct.solver_options = ocp_json_struct.solver_options.struct();
 
         % add compilation information to json
         libs = loadjson(fileread(fullfile(acados_folder, 'lib', 'link_libs.json')));
@@ -276,8 +274,5 @@ function ocp_generate_c_code(obj)
     fclose(fid);
     %% render templated code
     acados_template_mex.render_acados_templates(obj.acados_ocp_nlp_json.json_file)
-    if ~ispc
-        %% compile main
-        acados_template_mex.compile_main()
-    end
+    acados_template_mex.compile_ocp_shared_lib(obj.acados_ocp_nlp_json.code_export_directory)
 end

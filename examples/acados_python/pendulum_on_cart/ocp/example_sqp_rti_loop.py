@@ -1,8 +1,5 @@
 #
-# Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-# Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-# Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-# Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+# Copyright (c) The acados authors.
 #
 # This file is part of acados.
 #
@@ -137,7 +134,6 @@ def main():
 
     ocp_solver.print_statistics() # encapsulates: stat = ocp_solver.get_stats("statistics")
 
-    #
     cost = ocp_solver.get_cost()
     print("cost function value of solution = ", cost)
 

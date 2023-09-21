@@ -1,8 +1,5 @@
 /*
- * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
- * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
- * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
- * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+ * Copyright (c) The acados authors.
  *
  * This file is part of acados.
  *
@@ -137,6 +134,7 @@ typedef struct
     bool sens_forw;
     bool sens_adj;
     bool sens_hess;
+    bool cost_computation;
 
     bool output_z;        // 1 -- if zn should be computed
     bool sens_algebraic;  // 1 -- if S_algebraic should be computed

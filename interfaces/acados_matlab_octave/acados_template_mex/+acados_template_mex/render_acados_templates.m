@@ -1,8 +1,5 @@
 %
-% Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-% Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-% Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-% Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+% Copyright (c) The acados authors.
 %
 % This file is part of acados.
 %
@@ -29,6 +26,7 @@
 % CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 % ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 % POSSIBILITY OF SUCH DAMAGE.;
+
 %
 
 function render_acados_templates(acados_ocp_nlp_json_file)
@@ -176,6 +174,11 @@ function render_acados_templates(acados_ocp_nlp_json_file)
     % Makefile
     template_file = 'Makefile.in';
     out_file = 'Makefile';
+    render_file( json_fullfile, template_dir, template_file, out_file, t_renderer_location )
+
+    % CMake
+    template_file = 'CMakeLists.in.txt';
+    out_file = 'CMakeLists.txt';
     render_file( json_fullfile, template_dir, template_file, out_file, t_renderer_location )
 
     % S-function

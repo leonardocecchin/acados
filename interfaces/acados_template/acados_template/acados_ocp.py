@@ -1,9 +1,6 @@
 # -*- coding: future_fstrings -*-
 #
-# Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-# Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-# Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-# Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+# Copyright (c) The acados authors.
 #
 # This file is part of acados.
 #
@@ -66,6 +63,7 @@ class AcadosOcpDims:
         self.__nsh_e   = 0
         self.__nsphi   = 0
         self.__nsphi_e = 0
+        self.__ns_0    = 0
         self.__ns      = 0
         self.__ns_e    = 0
         self.__ng      = 0
@@ -239,8 +237,14 @@ class AcadosOcpDims:
         return self.__nsphi_e
 
     @property
+    def ns_0(self):
+        """:math:`n_{s}^0` - total number of slacks at shooting node 0.
+        Type: int; default: 0"""
+        return self.__ns_0
+
+    @property
     def ns(self):
-        """:math:`n_{s}` - total number of slacks.
+        """:math:`n_{s}` - total number of slacks at stages (1, N-1).
         Type: int; default: 0"""
         return self.__ns
 
@@ -458,6 +462,13 @@ class AcadosOcpDims:
             raise Exception('Invalid nsphi_e value, expected nonnegative integer.')
 
     @ns.setter
+    def ns_0(self, ns_0):
+        if isinstance(ns_0, int) and ns_0 > -1:
+            self.__ns_0 = ns_0
+        else:
+            raise Exception('Invalid ns_0 value, expected nonnegative integer.')
+
+    @ns.setter
     def ns(self, ns):
         if isinstance(ns, int) and ns > -1:
             self.__ns = ns
@@ -499,6 +510,12 @@ class AcadosOcpDims:
 class AcadosOcpCost:
     """
     Class containing the numerical data of the cost:
+
+    NOTE: all cost terms, except for the terminal one are weighted with the corresponding time step.
+    This means given the time steps are :math:`\Delta t_0,..., \Delta t_N`, the total cost is given by:
+    :math:`c_\\text{total} = \Delta t_0 \cdot c_0(x_0, u_0, p_0, z_0) + ... + \Delta t_{N-1} \cdot c_{N-1}(x_0, u_0, p_0, z_0) + c_N(x_N, p_N)`.
+
+    This means the Lagrange cost term is given in continuous time, this makes up for a seeminglessly OCP discretization with a nonuniform time grid.
 
     In case of LINEAR_LS:
     stage cost is
@@ -980,6 +997,7 @@ class AcadosOcpConstraints:
         self.__ubx_0   = np.array([])
         self.__idxbx_0 = np.array([])
         self.__idxbxe_0 = np.array([])
+        self.__has_x0 = False
         # state bounds
         self.__lbx     = np.array([])
         self.__ubx     = np.array([])
@@ -1576,6 +1594,10 @@ class AcadosOcpConstraints:
         print("idxbxe_0: ", self.__idxbxe_0)
         return None
 
+    @property
+    def has_x0(self):
+        return self.__has_x0
+
     # SETTERS
     @constr_type.setter
     def constr_type(self, constr_type):
@@ -1631,7 +1653,6 @@ class AcadosOcpConstraints:
         else:
             raise Exception('Invalid idxbxe_0 value.')
 
-
     @x0.setter
     def x0(self, x0):
         if isinstance(x0, np.ndarray):
@@ -1639,6 +1660,7 @@ class AcadosOcpConstraints:
             self.__ubx_0 = x0
             self.__idxbx_0 = np.arange(x0.size)
             self.__idxbxe_0 = np.arange(x0.size)
+            self.__has_x0 = True
         else:
             raise Exception('Invalid x0 value.')
 
@@ -2150,6 +2172,7 @@ class AcadosOcpOptions:
         self.__Tsim = None                                    # automatically calculated as tf/N
         self.__print_level = 0                                # print level
         self.__initialize_t_slacks = 0                        # possible values: 0, 1
+        self.__cost_discretization = 'EULER'
         self.__regularize_method = None
         self.__time_steps = None
         self.__shooting_nodes = None
@@ -2170,6 +2193,8 @@ class AcadosOcpOptions:
         self.__model_external_shared_lib_name  = None         # name of the the .so lib
         self.__custom_update_filename = ''
         self.__custom_update_header_filename = ''
+        self.__custom_templates = []
+        self.__custom_update_copy = True
 
     @property
     def qp_solver(self):
@@ -2205,6 +2230,19 @@ class AcadosOcpOptions:
 
 
     @property
+    def custom_templates(self):
+        """
+        List of tuples of the form:
+        (input_filename, output_filename)
+
+        Custom templates are render in OCP solver generation.
+
+        Default: [].
+        """
+        return self.__custom_templates
+
+
+    @property
     def custom_update_header_filename(self):
         """
         Header filename of the custom C function to update solver data and parameters in between solver calls
@@ -2226,6 +2264,14 @@ class AcadosOcpOptions:
         Default: ''.
         """
         return self.__custom_update_header_filename
+
+    @property
+    def custom_update_copy(self):
+        """
+        Boolean;
+        If True, the custom update function files are copied into the `code_export_directory`.
+        """
+        return self.__custom_update_copy
 
 
     @property
@@ -2280,8 +2326,8 @@ class AcadosOcpOptions:
 
     @property
     def collocation_type(self):
-        """Collocation type: relevant for implicit integrators
-        -- string in {GAUSS_RADAU_IIA, GAUSS_LEGENDRE}.
+        """Collocation type: only relevant for implicit integrators
+        -- string in {'GAUSS_RADAU_IIA', 'GAUSS_LEGENDRE', 'EXPLICIT_RUNGE_KUTTA'}.
 
         Default: GAUSS_LEGENDRE
         """
@@ -2320,6 +2366,16 @@ class AcadosOcpOptions:
         Default: 0.0.
         """
         return self.__levenberg_marquardt
+
+    @property
+    def ext_qp_res(self):
+        """
+        Option determining if residual of QP solution is evaluated externally.
+        Mainly for debugging.
+        Type: int [0, 1]
+        Default: 0.
+        """
+        return self.__ext_qp_res
 
     @property
     def sim_method_num_stages(self):
@@ -2646,6 +2702,11 @@ class AcadosOcpOptions:
         """
         return self.__ext_cost_num_hess
 
+    @property
+    def cost_discretization(self):
+        """Cost discretization"""
+        return self.__cost_discretization
+
     @qp_solver.setter
     def qp_solver(self, qp_solver):
         qp_solvers = ('PARTIAL_CONDENSING_HPIPM', \
@@ -2670,7 +2731,7 @@ class AcadosOcpOptions:
 
     @collocation_type.setter
     def collocation_type(self, collocation_type):
-        collocation_types = ('GAUSS_RADAU_IIA', 'GAUSS_LEGENDRE')
+        collocation_types = ('GAUSS_RADAU_IIA', 'GAUSS_LEGENDRE', 'EXPLICIT_RUNGE_KUTTA')
         if collocation_type in collocation_types:
             self.__collocation_type = collocation_type
         else:
@@ -2701,6 +2762,17 @@ class AcadosOcpOptions:
         else:
             raise Exception('Invalid custom_update_filename, expected a string.\n')
 
+    @custom_templates.setter
+    def custom_templates(self, custom_templates):
+        if not isinstance(custom_templates, list):
+            raise Exception('Invalid custom_templates, expected a list.\n')
+        for tup in custom_templates:
+            if not isinstance(tup, tuple):
+                raise Exception('Invalid custom_templates, shoubld be list of tuples.\n')
+            for s in tup:
+                if not isinstance(s, str):
+                    raise Exception('Invalid custom_templates, shoubld be list of tuples of strings.\n')
+        self.__custom_templates = custom_templates
 
     @custom_update_header_filename.setter
     def custom_update_header_filename(self, custom_update_header_filename):
@@ -2708,6 +2780,13 @@ class AcadosOcpOptions:
             self.__custom_update_header_filename = custom_update_header_filename
         else:
             raise Exception('Invalid custom_update_header_filename, expected a string.\n')
+
+    @custom_update_copy.setter
+    def custom_update_copy(self, custom_update_copy):
+        if isinstance(custom_update_copy, bool):
+            self.__custom_update_copy = custom_update_copy
+        else:
+            raise Exception('Invalid custom_update_copy, expected a bool.\n')
 
     @hessian_approx.setter
     def hessian_approx(self, hessian_approx):
@@ -2828,6 +2907,13 @@ class AcadosOcpOptions:
         else:
             raise Exception('Invalid sim_method_newton_iter value. sim_method_newton_iter must be an integer.')
 
+    @sim_method_newton_tol.setter
+    def sim_method_newton_tol(self, sim_method_newton_tol):
+        if isinstance(sim_method_newton_tol, float) and sim_method_newton_tol > 0:
+            self.__sim_method_newton_tol = sim_method_newton_tol
+        else:
+            raise Exception('Invalid sim_method_newton_tol value. sim_method_newton_tol must be a positive float.')
+
     @sim_method_jac_reuse.setter
     def sim_method_jac_reuse(self, sim_method_jac_reuse):
         # if sim_method_jac_reuse in (True, False):
@@ -2843,6 +2929,15 @@ class AcadosOcpOptions:
         else:
             raise Exception('Invalid nlp_solver_type value. Possible values are:\n\n' \
                     + ',\n'.join(nlp_solver_types) + '.\n\nYou have: ' + nlp_solver_type + '.\n\n')
+
+    @cost_discretization.setter
+    def cost_discretization(self, cost_discretization):
+        cost_discretizations = ('EULER', 'INTEGRATOR')
+        if cost_discretization in cost_discretizations:
+            self.__cost_discretization = cost_discretization
+        else:
+            raise Exception('Invalid cost_discretization value. Possible values are:\n\n' \
+                    + ',\n'.join(cost_discretizations) + '.\n\nYou have: ' + cost_discretization + '.')
 
     @nlp_solver_step_length.setter
     def nlp_solver_step_length(self, nlp_solver_step_length):
@@ -3080,6 +3175,9 @@ class AcadosOcp:
         """Constraints definitions, type :py:class:`acados_template.acados_ocp.AcadosOcpConstraints`"""
         self.solver_options = AcadosOcpOptions()
         """Solver Options, type :py:class:`acados_template.acados_ocp.AcadosOcpOptions`"""
+
+        self.zoro_description = None
+        """zoRO - zero order robust optimization - description: for advanced users."""
 
         self.acados_include_path = os.path.join(acados_path, 'include').replace(os.sep, '/') # the replace part is important on Windows for CMake
         """Path to acados include directory (set automatically), type: `string`"""

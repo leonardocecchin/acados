@@ -1,8 +1,5 @@
 %
-% Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-% Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-% Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-% Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+% Copyright (c) The acados authors.
 %
 % This file is part of acados.
 %
@@ -29,6 +26,7 @@
 % CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 % ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 % POSSIBILITY OF SUCH DAMAGE.;
+
 %
 
 function make_mex_{{ model.name }}()
@@ -47,6 +45,27 @@ function make_mex_{{ model.name }}()
     external_include = ['-I', fullfile(acados_folder, 'external')];
     blasfeo_include = ['-I', fullfile(acados_folder, 'external', 'blasfeo', 'include')];
     hpipm_include = ['-I', fullfile(acados_folder, 'external', 'hpipm', 'include')];
+
+    % load linking information of compiled acados
+    link_libs_core_filename = fullfile(acados_folder, 'lib', 'link_libs.json');
+    addpath(fullfile(acados_folder, 'external', 'jsonlab'));
+    link_libs = loadjson(link_libs_core_filename);
+
+    % add necessary link instructs
+    acados_def_extra = '';
+    acados_lib_extra = {};
+    lib_names = fieldnames(link_libs);
+    for idx = 1 : numel(lib_names)
+        lib_name = lib_names{idx};
+        link_arg = link_libs.(lib_name);
+        if ~isempty(link_arg)
+            def_arg = sprintf('-DACADOS_WITH_%s', upper(lib_name));
+            acados_def_extra = [acados_def_extra, ' ', def_arg];
+            if ~strcmp(lib_name, 'openmp')
+                acados_lib_extra = [acados_lib_extra, link_arg];
+            end
+        end
+    end
 
     mex_include = ['-I', fullfile(acados_folder, 'interfaces', 'acados_matlab_octave')];
 
@@ -88,21 +107,32 @@ function make_mex_{{ model.name }}()
         setenv('CFLAGS', cflags_tmp);
     end
 
+    %% flags
+    FLAGS = 'CFLAGS=$CFLAGS -std=c99';
+    LDFLAGS = 'LDFLAGS=$LDFLAGS';
+    COMPFLAGS = 'COMPFLAGS=$COMPFLAGS';
+    COMPDEFINES = 'COMPDEFINES=$COMPDEFINES';
+    if ~ismac() && ~isempty(link_libs.openmp)
+        LDFLAGS = [LDFLAGS, ' ', link_libs.openmp];
+        COMPFLAGS = [COMPFLAGS, ' ', link_libs.openmp]; % seems unnecessary
+    end
+    if ~is_octave()
+        FLAGS = [FLAGS, acados_def_extra];
+        COMPDEFINES = [COMPDEFINES, acados_def_extra];
+    end
+
     %% compile mex
     for ii=1:length(mex_files)
         disp(['compiling ', mex_files{ii}])
         if is_octave()
     %        mkoctfile -p CFLAGS
             mex(acados_include, template_lib_include, external_include, blasfeo_include, hpipm_include,...
-            acados_lib_path, template_lib_path, mex_include, '-lacados', '-lhpipm', '-lblasfeo', mex_files{ii})
+                template_lib_path, mex_include, acados_lib_path, '-lacados', '-lhpipm', '-lblasfeo',...
+                acados_lib_extra{:}, mex_files{ii})
         else
-            if ismac()
-                FLAGS = 'CFLAGS=$CFLAGS -std=c99';
-            else
-                FLAGS = 'CFLAGS=$CFLAGS -std=c99 -fopenmp';
-            end
-            mex(FLAGS, acados_include, template_lib_include, external_include, blasfeo_include, hpipm_include,...
-                acados_lib_path, template_lib_path, mex_include, '-lacados', '-lhpipm', '-lblasfeo', mex_files{ii})
+            mex(FLAGS, LDFLAGS, COMPDEFINES, COMPFLAGS, acados_include, template_lib_include, external_include, blasfeo_include, hpipm_include,...
+                template_lib_path, mex_include, acados_lib_path, '-lacados', '-lhpipm', '-lblasfeo',...
+                acados_lib_extra{:}, mex_files{ii})
         end
     end
 

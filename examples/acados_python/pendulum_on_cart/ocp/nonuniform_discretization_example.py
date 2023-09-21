@@ -1,9 +1,6 @@
 # -*- coding: future_fstrings -*-
 #
-# Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-# Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-# Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-# Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+# Copyright (c) The acados authors.
 #
 # This file is part of acados.
 #
@@ -144,7 +141,7 @@ def main(discretization='shooting_nodes'):
     json_path = os.path.join(acados_path, 'interfaces/acados_template/acados_template')
     with open(json_path + '/simulink_default_opts.json', 'r') as f:
         simulink_opts = json.load(f)
-    ocp_solver = AcadosOcpSolver(ocp, json_file = 'acados_ocp.json', simulink_opts = simulink_opts)
+    ocp_solver = AcadosOcpSolver(ocp, json_file = 'acados_ocp.json', simulink_opts = simulink_opts, verbose=False)
 
     # ocp_solver = AcadosOcpSolver(ocp, json_file = 'acados_ocp.json')
 

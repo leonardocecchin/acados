@@ -1,8 +1,5 @@
 /*
- * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
- * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
- * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
- * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+ * Copyright (c) The acados authors.
  *
  * This file is part of acados.
  *
@@ -87,8 +84,8 @@ typedef struct
     acados_size_t (*workspace_calculate_size)(void *config, void *dims, void *opts);
     void (*initialize)(void *config, void *dims, void *model, void *opts, void *mem, void *work);
     void (*update_qp_matrices)(void *config, void *dims, void *model, void *opts, void *mem, void *work);
+    void (*update_qp_vectors)(void *config, void *dims, void *model, void *opts, void *mem, void *work);
     void (*compute_fun)(void *config, void *dims, void *model, void *opts, void *mem, void *work);
-    void (*bounds_update)(void *config, void *dims, void *model, void *opts, void *mem, void *work);
     void (*config_initialize_default)(void *config);
     // dimension setters
     void (*dims_set)(void *config_, void *dims_, const char *field, const int *value);

@@ -1,9 +1,6 @@
 # -*- coding: future_fstrings -*-
 #
-# Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-# Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-# Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-# Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+# Copyright (c) The acados authors.
 #
 # This file is part of acados.
 #
@@ -34,26 +31,11 @@
 
 # authors: Katrin Baumgaertner, Jonathan Frey
 
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+from acados_template import latexify_plot
 
-
-def latexify():
-    params = {
-        "backend": "ps",
-        "text.latex.preamble": r"\usepackage{gensymb} \usepackage{amsmath}",
-        "axes.labelsize": 10,
-        "axes.titlesize": 10,
-        "legend.fontsize": 10,
-        "xtick.labelsize": 10,
-        "ytick.labelsize": 10,
-        "text.usetex": True,
-        "font.family": "serif",
-    }
-
-    matplotlib.rcParams.update(params)
-
+latexify_plot()
 
 def plot_cstr(
     dt,
@@ -83,7 +65,6 @@ def plot_cstr(
     states_lables = ["$c$ [kmol/m$^3$]", "$T$ [K]", "$h$ [m]"]
     controls_lables = ["$T_c$ [K]", "$F$ [m$^3$/min]"]
 
-    latexify()
     fig, axes = plt.subplots(ncols=2, nrows=nx)
 
     for i in range(nx):
@@ -103,11 +84,16 @@ def plot_cstr(
         axes[i, 0].grid()
         axes[i, 0].set_xlim(ts[0], ts[-1])
 
+        if x_max is not None:
+            axes[i, 0].hlines(
+                x_max[i], ts[0], ts[-1], linestyles="dashed", alpha=0.8, color="k"
+            )
+
         if x_min is not None:
             axes[i, 0].set_ylim(bottom=x_min[i])
 
         if x_max is not None:
-            axes[i, 0].set_ylim(top=x_max[i])
+            axes[i, 0].set_ylim(top=x_max[i] * 1.05)
 
     for i in range(nu):
         for U, label in zip(U_list, labels_list):

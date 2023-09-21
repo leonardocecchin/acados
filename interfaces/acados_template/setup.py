@@ -1,8 +1,5 @@
 #
-# Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-# Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-# Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-# Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+# Copyright (c) The acados authors.
 #
 # This file is part of acados.
 #
@@ -92,6 +89,8 @@ setup(name='acados_template',
         'c_templates_tera/matlab_templates/make_sfun.in.m',
         'c_templates_tera/matlab_templates/make_sfun_sim.in.m',
         'c_templates_tera/matlab_templates/mex_solver.in.m',
+        'custom_update_templates/custom_update_function_zoro_template.in.c',
+        'custom_update_templates/custom_update_function_zoro_template.in.h',
         ]},
     zip_safe=False
 )

@@ -1,8 +1,5 @@
 %
-% Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-% Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-% Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-% Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+% Copyright (c) The acados authors.
 %
 % This file is part of acados.
 %
@@ -29,6 +26,7 @@
 % CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 % ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 % POSSIBILITY OF SUCH DAMAGE.;
+
 %
 
 %% test of native matlab interface
@@ -47,11 +45,10 @@ sim_sens_forw = 'false'; % true, false
 sim_jac_reuse = 'false'; % true, false
 sim_num_stages = 3;
 sim_num_steps = 3;
-sim_newton_iter = 3;
+sim_newton_iter = 10;
 model_name = 'pend_dae';
 
 % ocp
-param_scheme = 'multiple_shooting_unif_grid';
 ocp_N = 50;
 nlp_solver = 'sqp_rti'; % sqp, sqp_rti
 nlp_solver_exact_hessian = 'false';
@@ -106,7 +103,7 @@ nbu = nu; % number of bounds on controls u
 nh_e = 0;
 
 % cost
-% linear least square cost: y^T * W * y, where y = Vx * x + Vu * u - y_ref
+% linear least square cost: y^T * W * y, where y = Vx * x + Vu * u  + Vz * z - y_ref
 Vx = eye(ny, nx); % state-to-output matrix in lagrange term
 Vu = zeros(ny, nu);
 Vu(nx:end, nx:end) = eye(nu); % input-to-output matrix in lagrange term
@@ -116,6 +113,7 @@ W = diag([1e3 * ones(3,1);... % xpos, ypos, alpha
             ones(3,1); ... %speeds
             1e2 ]); % control
 W_e = W(nu+1:nu+nx, nu+1:nu+nx); % weight matrix in mayer term
+Vz = zeros(ny, nz);
 yr = [xtarget; uref]; % output reference in lagrange term
 yr_e = xtarget; % output reference in mayer term
 
@@ -158,6 +156,7 @@ ocp_model.set('cost_type', cost_type);
 ocp_model.set('cost_type_e', cost_type);
 if (strcmp(cost_type, 'linear_ls'))
 	ocp_model.set('cost_Vu', Vu);
+    ocp_model.set('cost_Vz', Vz);
 	ocp_model.set('cost_Vx', Vx);
 	ocp_model.set('cost_Vx_e', Vx_e);
 	ocp_model.set('cost_W', W);
@@ -201,19 +200,19 @@ end
 ocp_opts = acados_ocp_opts();
 ocp_opts.set('compile_interface', compile_interface);
 ocp_opts.set('codgen_model', codgen_model);
-ocp_opts.set('param_scheme', param_scheme);
 ocp_opts.set('param_scheme_N', ocp_N);
 ocp_opts.set('nlp_solver', nlp_solver);
 ocp_opts.set('nlp_solver_exact_hessian', nlp_solver_exact_hessian);
 ocp_opts.set('regularize_method', regularize_method);
 ocp_opts.set('ext_fun_compile_flags', '');
 
+tol_sqp = 1e-10;
 if (strcmp(nlp_solver, 'sqp'))
 	ocp_opts.set('nlp_solver_max_iter', nlp_solver_max_iter);
-    ocp_opts.set('nlp_solver_tol_stat', 1e-8);
-    ocp_opts.set('nlp_solver_tol_eq', 1e-8);
-    ocp_opts.set('nlp_solver_tol_ineq', 1e-8);
-    ocp_opts.set('nlp_solver_tol_comp', 1e-8);
+    ocp_opts.set('nlp_solver_tol_stat', tol_sqp);
+    ocp_opts.set('nlp_solver_tol_eq', tol_sqp);
+    ocp_opts.set('nlp_solver_tol_ineq', tol_sqp);
+    ocp_opts.set('nlp_solver_tol_comp', tol_sqp);
 end
 ocp_opts.set('qp_solver', qp_solver);
 if (strcmp(qp_solver, 'partial_condensing_hpipm'))
@@ -427,9 +426,12 @@ dist2target = norm( sim.get('xn') - xtarget );
 %requ_dist2target = 1e-4;
 requ_dist2target = 1e-3;
 
+
+fprintf(['test_ocp_pendulum_dae: check for constant pendulum length.\nDeviation by maximum of\t', ...
+        num2str(max(abs(check))), '\n']);
 if any( max(abs(check)) > tol_pendulum )
-    error(['test_ocp_pendulum_dae: check for constant pendulum length failed, violation >' ...
-        num2str(tol_pendulum)]);
+    error(['test_ocp_pendulum_dae: check for constant pendulum length failed, violation' ...
+        num2str(max(abs(check))), '>', num2str(tol_pendulum)]);
 elseif dist2target > requ_dist2target
     error(['test_ocp_pendulum_dae: system should have reached desired state up to accuracy ' ...
            num2str(requ_dist2target,'%e') ' is ' num2str(dist2target,'%e')]);

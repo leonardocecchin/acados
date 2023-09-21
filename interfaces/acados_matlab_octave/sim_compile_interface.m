@@ -1,8 +1,5 @@
 %
-% Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-% Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-% Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-% Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+% Copyright (c) The acados authors.
 %
 % This file is part of acados.
 %
@@ -29,6 +26,7 @@
 % CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 % ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 % POSSIBILITY OF SUCH DAMAGE.;
+
 %
 
 function sim_compile_interface(opts)
@@ -44,14 +42,8 @@ acados_interfaces_include = ['-I' fullfile(acados_folder, 'interfaces')];
 acados_lib_path = ['-L' fullfile(acados_folder, 'lib')];
 
 mex_names = { ...
-    'sim_create', ...
-    'sim_destroy', ...
-    'sim_create_ext_fun', ...
-    'sim_destroy_ext_fun', ...
     'sim_solve', ...
-    'sim_set', ...
     'sim_get', ...
-    'sim_precompute' ...
 };
 
 mex_files = cell(length(mex_names), 1);

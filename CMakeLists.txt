@@ -1,8 +1,5 @@
 #
-# Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-# Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-# Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-# Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+# Copyright (c) The acados authors.
 #
 # This file is part of acados.
 #
@@ -81,7 +78,6 @@ option(ACADOS_WITH_OSQP "OSQP solver" OFF)
 # Interfaces
 option(ACADOS_MATLAB "The Matlab Interface" OFF)
 option(ACADOS_OCTAVE "The Octave Interface" OFF)
-option(ACADOS_OCTAVE_TEMPLATE "Template MEX Interface" OFF)
 option(ACADOS_PYTHON "Python Interface" OFF)
 
 

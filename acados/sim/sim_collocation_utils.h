@@ -1,8 +1,5 @@
 /*
- * Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
- * Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
- * Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
- * Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+ * Copyright (c) The acados authors.
  *
  * This file is part of acados.
  *
@@ -72,6 +69,7 @@ typedef enum
 {
     GAUSS_LEGENDRE,
     GAUSS_RADAU_IIA,
+    EXPLICIT_RUNGE_KUTTA,
 } sim_collocation_type;
 
 
@@ -90,6 +88,9 @@ acados_size_t butcher_tableau_work_calculate_size(int ns);
 //
 void calculate_butcher_tableau(int ns, sim_collocation_type collocation_type, double *c_vec,
                                double *b_vec, double *A_mat, void *work);
+
+//
+void get_explicit_butcher_tableau(int ns, double *A, double *b, double *c);
 
 
 

@@ -1,8 +1,5 @@
 #
-# Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-# Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-# Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-# Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+# Copyright (c) The acados authors.
 #
 # This file is part of acados.
 #
@@ -36,10 +33,10 @@ from casadi import SX, vertcat, sin, cos, Function
 
 def export_pendulum_ode_model() -> AcadosModel:
 
-    model_name = 'pendulum_ode'
+    model_name = 'pendulum'
 
     # constants
-    M = 1. # mass of the cart [kg] -> now estimated
+    m_cart = 1. # mass of the cart [kg]
     m = 0.1 # mass of the ball [kg]
     g = 9.81 # gravity constant [m/s^2]
     l = 0.8 # length of the rod [m]
@@ -72,11 +69,11 @@ def export_pendulum_ode_model() -> AcadosModel:
     # dynamics
     cos_theta = cos(theta)
     sin_theta = sin(theta)
-    denominator = M + m - m*cos_theta*cos_theta
+    denominator = m_cart + m - m*cos_theta*cos_theta
     f_expl = vertcat(v1,
                      dtheta,
                      (-m*l*sin_theta*dtheta*dtheta + m*g*cos_theta*sin_theta+F)/denominator,
-                     (-m*l*cos_theta*sin_theta*dtheta*dtheta + F*cos_theta+(M+m)*g*sin_theta)/(l*denominator)
+                     (-m*l*cos_theta*sin_theta*dtheta*dtheta + F*cos_theta+(m_cart+m)*g*sin_theta)/(l*denominator)
                      )
 
     f_impl = xdot - f_expl

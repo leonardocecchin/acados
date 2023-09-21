@@ -1,8 +1,5 @@
 %
-% Copyright 2019 Gianluca Frison, Dimitris Kouzoupis, Robin Verschueren,
-% Andrea Zanelli, Niels van Duijkeren, Jonathan Frey, Tommaso Sartor,
-% Branimir Novoselnik, Rien Quirynen, Rezart Qelibari, Dang Doan,
-% Jonas Koenemann, Yutao Chen, Tobias Schöls, Jonas Schlagenhauf, Moritz Diehl
+% Copyright (c) The acados authors.
 %
 % This file is part of acados.
 %
@@ -29,7 +26,13 @@
 % CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 % ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 % POSSIBILITY OF SUCH DAMAGE.;
+
 %
+{%- if not solver_options.custom_update_filename %}
+    {%- set custom_update_filename = "" %}
+{% else %}
+    {%- set custom_update_filename = solver_options.custom_update_filename %}
+{%- endif %}
 
 SOURCES = { ...
         {%- if solver_options.integrator_type == 'ERK' %}
@@ -71,7 +74,6 @@ SOURCES = { ...
             '{{ model.name }}_cost/{{ model.name }}_cost_ext_cost_0_fun_jac.c',...
             '{{ model.name }}_cost/{{ model.name }}_cost_ext_cost_0_fun_jac_hess.c',...
         {%- endif %}
-
         {%- if cost.cost_type == "NONLINEAR_LS" %}
             '{{ model.name }}_cost/{{ model.name }}_cost_y_fun.c',...
             '{{ model.name }}_cost/{{ model.name }}_cost_y_fun_jac_ut_xt.c',...
@@ -103,6 +105,9 @@ SOURCES = { ...
             '{{ model.name }}_constraints/{{ model.name }}_constr_h_e_fun_jac_uxt_zt.c', ...
         {%- elif constraints.constr_type_e == "BGP" and dims.nphi_e > 0 %}
             '{{ model.name }}_constraints/{{ model.name }}_phi_e_constraint.c', ...
+        {%- endif %}
+        {%- if custom_update_filename != "" %}
+            '{{ custom_update_filename }}', ...
         {%- endif %}
             'acados_solver_sfunction_{{ model.name }}.c', ...
             'acados_solver_{{ model.name }}.c'
@@ -201,7 +206,7 @@ i_in = i_in + 1;
 {%- endif %}
 
 {%- if dims.np > 0 and simulink_opts.inputs.parameter_traj -%}  {#- parameter_traj #}
-input_note = strcat(input_note, num2str(i_in), ') parameters - concatenated for all shooting nodes 0 to N+1,',...
+input_note = strcat(input_note, num2str(i_in), ') parameters - concatenated for all shooting nodes 0 to N,',...
                     ' size [{{ (dims.N+1)*dims.np }}]\n ');
 sfun_input_names = [sfun_input_names; 'parameter_traj [{{ (dims.N+1)*dims.np }}]'];
 i_in = i_in + 1;
