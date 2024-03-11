@@ -41,6 +41,7 @@ set(EXT_DEP OFF CACHE BOOL "Compile external dependencies in BLASFEO")
 set(ACADOS_INSTALL_DIR "install" CACHE PATH  "Installation path to ACADOS_INSTALL_DIR")
 
 set(ACADOS_WITH_QPOASES ON CACHE BOOL "Compile acados with QPoases")
+set(ACADOS_WITH_DAQP OFF CACHE BOOL "Compile acados with DAQP")
 
 # import from platform folder
 set(CMAKE_IMPORT_LIBRARY_PREFIX "")
