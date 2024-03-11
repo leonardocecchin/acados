@@ -3,7 +3,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
 SET(CMAKE_SYSTEM_PROCESSOR "ppc")
 
 file(TO_CMAKE_PATH "C:/ProgramData/dSPACE/AD52223F-E7EC-4A16-97FB-8ADC3C426EE0" DSPACE_TOOLS)
-set(DSPACE_RTLIB "C:/dSpace_RCPHIL_2018B/DS1401/RTLib")
+set(DSPACE_RTLIB "C:/dSpace_R2018b/dSpace_RCPHIL_2018-B/DS1401/RTLib")
 set(DSPACE_PPCTOOLS "${DSPACE_TOOLS}/Compiler/PPCTools")
 
 # C Compiler
@@ -14,20 +14,23 @@ find_program(CMAKE_CXX_COMPILER NAMES ${DSPACE_PPCTOOLS}/bin/mccppc.exe)
 find_program(CMAKE_ASM_COMPILER NAMES ${DSPACE_PPCTOOLS}/bin/asmppc.exe)
 set(CMAKE_RANLIB ":")
 
-find_program(CMAKE_MAKE_PROGRAM NAMES "C:/dSpace_RCPHIL_2018B/Exe/DSMAKE.exe")
+find_program(CMAKE_MAKE_PROGRAM NAMES "C:/dSpace_R2018b/dSpace_RCPHIL_2018-B/Exe/DSMAKE.exe")
 
-SET(CMAKE_FIND_ROOT_PATH ${DSPACE_PPCTOOLS}) 
+SET(CMAKE_FIND_ROOT_PATH ${DSPACE_PPCTOOLS})
 SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
 add_definitions(-D__MABX2__ -D__DSPACE__)
 
+add_compile_options("$<$<CONFIG:RELASE>:-std=c99>")
+add_compile_options("$<$<CONFIG:DEBUG>:-std=c99 -g3>")
+
 # Compiler flags
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -H -J{DSPACE_RTLIB}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -H -J{DSPACE_RTLIB}")
-set(CMAKE_C_FLAGS "-Ot -Oi -Or -Ox -D_INLINE" CACHE STRING "" FORCE)
-# set(CMAKE_C_FLAGS "-D_INLINE" CACHE STRING "" FORCE)
+# set(CMAKE_C_FLAGS "-Ot -Oi -Or -Ox -D_INLINE" CACHE STRING "" FORCE)
+set(CMAKE_C_FLAGS "-D_INLINE" CACHE STRING "" FORCE)
 
 # acados flags
 set(BLASFEO_TARGET "GENERIC" CACHE STRING "BLASFEO Target architecture")
@@ -37,6 +40,7 @@ set(BLASFEO_EXAMPLES OFF CACHE BOOL "Examples disabled")
 set(EXT_DEP OFF CACHE BOOL "Compile external dependencies in BLASFEO")
 set(ACADOS_INSTALL_DIR "install" CACHE PATH  "Installation path to ACADOS_INSTALL_DIR")
 
+set(ACADOS_WITH_QPOASES ON CACHE BOOL "Compile acados with QPoases")
 
 # import from platform folder
 set(CMAKE_IMPORT_LIBRARY_PREFIX "")
@@ -55,7 +59,6 @@ set(CMAKE_C_FLAGS "\"-J${DSPACE_RTLIB}\"")
 set(CMAKE_INCLUDE_FLAG_C "-J")
 set(CMAKE_INCLUDE_FLAG_CXX "-J")
 
-# add_definitions(-D__MABX2__)
 remove_definitions(-DLINUX)
 remove_definitions(-DOS_WINDOWS)
 remove_definitions(-D__LINUX__)
