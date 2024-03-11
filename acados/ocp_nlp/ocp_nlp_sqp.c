@@ -468,7 +468,7 @@ int ocp_nlp_sqp(void *config_, void *dims_, void *nlp_in_, void *nlp_out_,
     ocp_nlp_res *nlp_res = nlp_mem->nlp_res;
 
     ocp_nlp_sqp_workspace *work = work_;
-    ocp_nlp_sqp_cast_workspace(config, dims, opts, mem, work);
+    // ocp_nlp_sqp_cast_workspace(config, dims, opts, mem, work);
     ocp_nlp_workspace *nlp_work = work->nlp_work;
 
     ocp_qp_in *qp_in = nlp_mem->qp_in;
@@ -487,9 +487,10 @@ int ocp_nlp_sqp(void *config_, void *dims_, void *nlp_in_, void *nlp_out_,
     mem->time_sim_ad = 0.0;
 
     int N = dims->N;
-    int ii, qp_status;
+    int ii;
+    int qp_status = 0;
     int qp_iter = 0;
-    double alpha;
+    double alpha = 0.0;
 
 #if defined(ACADOS_WITH_OPENMP)
     // backup number of threads
@@ -497,7 +498,6 @@ int ocp_nlp_sqp(void *config_, void *dims_, void *nlp_in_, void *nlp_out_,
     // set number of threads
     omp_set_num_threads(opts->nlp_opts->num_threads);
 #endif
-    ocp_nlp_alias_memory_to_submodules(config, dims, nlp_in, nlp_out, nlp_opts, nlp_mem, nlp_work);
 
     //
     if (opts->initialize_t_slacks > 0)
@@ -508,16 +508,14 @@ int ocp_nlp_sqp(void *config_, void *dims_, void *nlp_in_, void *nlp_out_,
 
     // main sqp loop
     int sqp_iter = 0;
-    nlp_mem->sqp_iter = &sqp_iter;
 
     for (; sqp_iter < opts->max_iter; sqp_iter++)
     {
-        // linearizate NLP and update QP matrices
+        // linearize NLP and update QP matrices
         acados_tic(&timer1);
         ocp_nlp_approximate_qp_matrices(config, dims, nlp_in, nlp_out, nlp_opts, nlp_mem, nlp_work);
         mem->time_lin += acados_toc(&timer1);
 
-        #ifdef MEASURE_TIMINGS
         // get timings from integrator
         for (ii=0; ii<N; ii++)
         {
@@ -528,7 +526,6 @@ int ocp_nlp_sqp(void *config_, void *dims_, void *nlp_in_, void *nlp_out_,
             config->dynamics[ii]->memory_get(config->dynamics[ii], dims->dynamics[ii], mem->nlp_mem->dynamics[ii], "time_sim_ad", &tmp_time);
             mem->time_sim_ad += tmp_time;
         }
-        #endif  // MEASURE_TIMINGS
 
         // update QP rhs for SQP (step prim var, abs dual var)
         ocp_nlp_approximate_qp_vectors_sqp(config, dims, nlp_in, nlp_out, nlp_opts, nlp_mem, nlp_work);
@@ -593,7 +590,7 @@ int ocp_nlp_sqp(void *config_, void *dims_, void *nlp_in_, void *nlp_out_,
 
         // regularize Hessian
         acados_tic(&timer1);
-        config->regularize->regularize_hessian(config->regularize, dims->regularize,
+        config->regularize->regularize(config->regularize, dims->regularize,
                                                opts->nlp_opts->regularize, nlp_mem->regularize_mem);
         mem->time_reg += acados_toc(&timer1);
 
@@ -726,7 +723,7 @@ int ocp_nlp_sqp(void *config_, void *dims_, void *nlp_in_, void *nlp_out_,
             // NOTE: the "and" is interpreted as an "or" in the current implementation
 
             // preliminary line search
-            alpha = ocp_nlp_line_search(config, dims, nlp_in, nlp_out, nlp_opts, nlp_mem, nlp_work, 1);
+            alpha = ocp_nlp_line_search(config, dims, nlp_in, nlp_out, nlp_opts, nlp_mem, nlp_work, 1, sqp_iter);
 
             if (alpha < 1.0)
             {
@@ -745,41 +742,10 @@ int ocp_nlp_sqp(void *config_, void *dims_, void *nlp_in_, void *nlp_out_,
                 // int *ni = dims->ni;
 
                 /* evaluate constraints & dynamics at new step */
-                // The following (setting up ux + p in tmp_nlp_out and evaluation of constraints + dynamics)
-                // is not needed anymore because done in prelim. line search with early termination)
+                // NOTE: setting up the new iterate and evaluating is not needed here,
+                //   since this evaluation was perfomed just before this call in the early terminated line search.
+
                 // NOTE: similar to ocp_nlp_evaluate_merit_fun
-                // set up new linearization point in work->tmp_nlp_out
-                // for (ii = 0; ii < N; ii++)
-                //     blasfeo_dveccp(nx[ii+1], nlp_out->pi+ii, 0, work->nlp_work->tmp_nlp_out->pi+ii, 0);
-
-                // for (ii = 0; ii <= N; ii++)
-                //     blasfeo_dveccp(2*ni[ii], nlp_out->lam+ii, 0, work->nlp_work->tmp_nlp_out->lam+ii, 0);
-
-                // // tmp_nlp_out = iterate + step
-                // for (ii = 0; ii <= N; ii++)
-                //     blasfeo_daxpy(nv[ii], 1.0, qp_out->ux+ii, 0, nlp_out->ux+ii, 0, work->nlp_work->tmp_nlp_out->ux+ii, 0);
-
-    //             // evaluate
-    // #if defined(ACADOS_WITH_OPENMP)
-    //     #pragma omp parallel for
-    // #endif
-    //             for (ii=0; ii<N; ii++)
-    //             {
-    //                 config->dynamics[ii]->compute_fun(config->dynamics[ii], dims->dynamics[ii], nlp_in->dynamics[ii],
-    //                                                 nlp_opts->dynamics[ii], nlp_mem->dynamics[ii], work->nlp_work->dynamics[ii]);
-    //             }
-    // #if defined(ACADOS_WITH_OPENMP)
-    //     #pragma omp parallel for
-    // #endif
-    //             for (ii=0; ii<=N; ii++)
-    //             {
-    //                 config->constraints[ii]->compute_fun(config->constraints[ii], dims->constraints[ii],
-    //                                                     nlp_in->constraints[ii], nlp_opts->constraints[ii],
-    //                                                     nlp_mem->constraints[ii], work->nlp_work->constraints[ii]);
-    //             }
-    // #if defined(ACADOS_WITH_OPENMP)
-    //     #pragma omp parallel for
-    // #endif
                 // update QP rhs
                 // d_i = c_i(x_k + p_k) - \nabla c_i(x_k)^T * p_k
                 struct blasfeo_dvec *tmp_fun_vec;
@@ -802,7 +768,8 @@ int ocp_nlp_sqp(void *config_, void *dims_, void *nlp_in_, void *nlp_out_,
                     // d -- constraints
                     tmp_fun_vec = config->constraints[ii]->memory_get_fun_ptr(nlp_mem->constraints[ii]);
                     /* SOC for bounds can be skipped (because linear) */
-                    // NOTE: SOC can also be skipped for truely linear constraint, i.e. ng of nlp, now using ng of QP = (nh+ng)
+                    // NOTE: SOC can also be skipped for truely linear constraint, i.e. ng of nlp,
+                    //      now using ng of QP = (nh+ng)
 
                     // upper & lower
                     blasfeo_dveccp(ng[ii], tmp_fun_vec, nb[ii], qp_in->d+ii, nb[ii]); // lg
@@ -862,6 +829,7 @@ int ocp_nlp_sqp(void *config_, void *dims_, void *nlp_in_, void *nlp_out_,
                 // acados_tic(&timer1);
                 qp_status = qp_solver->evaluate(qp_solver, dims->qp_solver, qp_in, qp_out,
                                                 opts->nlp_opts->qp_solver_opts, nlp_mem->qp_solver_mem, nlp_work->qp_work);
+                // NOTE: QP is not timed, since this computation time is attributed to globalization.
                 // tmp_time = acados_toc(&timer1);
                 // mem->time_qp_sol += tmp_time;
                 // qp_solver->memory_get(qp_solver, nlp_mem->qp_solver_mem, "time_qp_solver_call", &tmp_time);
@@ -945,7 +913,7 @@ int ocp_nlp_sqp(void *config_, void *dims_, void *nlp_in_, void *nlp_out_,
 
         if (do_line_search)
         {
-            alpha = ocp_nlp_line_search(config, dims, nlp_in, nlp_out, nlp_opts, nlp_mem, nlp_work, 0);
+            alpha = ocp_nlp_line_search(config, dims, nlp_in, nlp_out, nlp_opts, nlp_mem, nlp_work, 0, sqp_iter);
         }
         mem->time_glob += acados_toc(&timer1);
         mem->stat[mem->stat_n*(sqp_iter+1)+6] = alpha;
@@ -1019,6 +987,8 @@ int ocp_nlp_sqp_precompute(void *config_, void *dims_, void *nlp_in_, void *nlp_
     ocp_nlp_out *nlp_out = nlp_out_;
     ocp_nlp_memory *nlp_mem = mem->nlp_mem;
 
+    nlp_mem->workspace_size = ocp_nlp_workspace_calculate_size(config, dims, opts->nlp_opts);
+
     ocp_nlp_sqp_workspace *work = work_;
     ocp_nlp_sqp_cast_workspace(config, dims, opts, mem, work);
     ocp_nlp_workspace *nlp_work = work->nlp_work;
@@ -1042,7 +1012,7 @@ void ocp_nlp_sqp_eval_param_sens(void *config_, void *dims_, void *opts_, void *
     ocp_nlp_out *sens_nlp_out = sens_nlp_out_;
 
     ocp_nlp_sqp_workspace *work = work_;
-    ocp_nlp_sqp_cast_workspace(config, dims, opts, mem, work);
+    // ocp_nlp_sqp_cast_workspace(config, dims, opts, mem, work);
     ocp_nlp_workspace *nlp_work = work->nlp_work;
 
     d_ocp_qp_copy_all(nlp_mem->qp_in, work->tmp_qp_in);
@@ -1050,7 +1020,7 @@ void ocp_nlp_sqp_eval_param_sens(void *config_, void *dims_, void *opts_, void *
 
     double one = 1.0;
 
-    if ((!strcmp("ex", field)) & (stage==0))
+    if ((!strcmp("ex", field)) && (stage==0))
     {
         d_ocp_qp_set_el("lbx", stage, index, &one, work->tmp_qp_in);
         d_ocp_qp_set_el("ubx", stage, index, &one, work->tmp_qp_in);

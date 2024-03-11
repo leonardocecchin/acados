@@ -89,12 +89,14 @@ classdef acados_ocp_opts < handle
             obj.opts_struct.sim_method_jac_reuse = 0;
             obj.opts_struct.gnsf_detect_struct = 'true';
             obj.opts_struct.regularize_method = 'no_regularize';
+            obj.opts_struct.reg_epsilon = 1e-4;
             obj.opts_struct.print_level = 0;
             obj.opts_struct.levenberg_marquardt = 0.0;
             % 0 or 1, only used if nlp_solver_exact_hessian
             obj.opts_struct.exact_hess_dyn = 1;
             obj.opts_struct.exact_hess_cost = 1;
             obj.opts_struct.exact_hess_constr = 1;
+            obj.opts_struct.fixed_hess = 0;
             obj.opts_struct.ext_fun_compile_flags = '-O2';
 
             obj.opts_struct.output_dir = fullfile(pwd, 'build');
@@ -130,15 +132,14 @@ classdef acados_ocp_opts < handle
             elseif (strcmp(field, 'nlp_solver_exact_hessian'))
                 obj.opts_struct.nlp_solver_exact_hessian = value;
             % hessian approx
-            elseif (strcmp(field, 'nlp_solver_exact_hessian'))
-                obj.opts_struct.nlp_solver_exact_hessian = value;
             elseif (strcmp(field, 'exact_hess_dyn'))
                 obj.opts_struct.exact_hess_dyn = value;
             elseif (strcmp(field, 'exact_hess_cost'))
                 obj.opts_struct.exact_hess_cost = value;
             elseif (strcmp(field, 'exact_hess_constr'))
                 obj.opts_struct.exact_hess_constr = value;
-
+            elseif (strcmp(field, 'fixed_hess'))
+                obj.opts_struct.fixed_hess = value;
             elseif (strcmp(field, 'nlp_solver_max_iter'))
                 obj.opts_struct.nlp_solver_max_iter = value;
             elseif (strcmp(field, 'nlp_solver_tol_stat'))
@@ -197,6 +198,8 @@ classdef acados_ocp_opts < handle
                 obj.opts_struct.gnsf_detect_struct = value;
             elseif (strcmp(field, 'regularize_method'))
                 obj.opts_struct.regularize_method = value;
+            elseif (strcmp(field, 'reg_epsilon'))
+                obj.opts_struct.reg_epsilon = value;
             elseif (strcmp(field, 'output_dir'))
                 obj.opts_struct.output_dir = value;
             elseif (strcmp(field, 'print_level'))

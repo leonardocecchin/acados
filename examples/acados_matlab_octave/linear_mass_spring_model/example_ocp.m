@@ -75,7 +75,7 @@ cost_type = 'auto';
 
 
 %% create model entries
-model = linear_mass_spring_model;
+model = linear_mass_spring_model();
 
 
 
@@ -249,7 +249,6 @@ end
 ocp = acados_ocp(ocp_model, ocp_opts);
 ocp
 ocp.C_ocp
-ocp.C_ocp_ext_fun
 
 
 

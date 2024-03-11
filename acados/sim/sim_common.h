@@ -83,6 +83,7 @@ typedef struct
     void *model;
 
     double T;  // simulation time
+    double t0; // initial time (only relevant for time dependent dynamics)
 
 } sim_in;
 
@@ -135,6 +136,7 @@ typedef struct
     bool sens_adj;
     bool sens_hess;
     bool cost_computation;
+    ocp_nlp_cost_t cost_type;
 
     bool output_z;        // 1 -- if zn should be computed
     bool sens_algebraic;  // 1 -- if S_algebraic should be computed
@@ -202,6 +204,8 @@ sim_config *sim_config_assign(void *raw_memory);
 acados_size_t sim_in_calculate_size(void *config, void *dims);
 //
 sim_in *sim_in_assign(void *config, void *dims, void *raw_memory);
+//
+void sim_in_assign_and_advance(void *config, void *dims, sim_in **sim_in_p, char **c_ptr);
 //
 int sim_in_set_(void *config_, void *dims_, sim_in *in, const char *field, void *value);
 

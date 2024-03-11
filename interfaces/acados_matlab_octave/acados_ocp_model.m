@@ -52,6 +52,7 @@ classdef acados_ocp_model < handle
             obj.model_struct.cost_type_e = 'auto';
             obj.model_struct.dyn_type = 'implicit';
             obj.model_struct.constr_type = 'bgh';
+            obj.model_struct.constr_type_0 = 'bgh';
             obj.model_struct.constr_type_e = 'bgh';
         end
 
@@ -187,6 +188,14 @@ classdef acados_ocp_model < handle
                     obj.model_struct.cost_zu = value;
                 elseif (strcmp(field, 'cost_zu_e'))
                     obj.model_struct.cost_zu_e = value;
+                elseif (strcmp(field, 'cost_zl_0'))
+                    obj.model_struct.cost_zl_0 = value;
+                elseif (strcmp(field, 'cost_zu_0'))
+                    obj.model_struct.cost_zu_0 = value;
+                elseif (strcmp(field, 'cost_Zl_0'))
+                    obj.model_struct.cost_Zl_0 = value;
+                elseif (strcmp(field, 'cost_Zu_0'))
+                    obj.model_struct.cost_Zu_0 = value;
                 else
                     disp(['acados_ocp_model: set: wrong field: ', field]);
                     keyboard;
@@ -222,6 +231,8 @@ classdef acados_ocp_model < handle
 
                 if (strcmp(field, 'constr_type'))
                     obj.model_struct.constr_type = value;
+                elseif(strcmp(field, 'constr_type_0'))
+                    obj.model_struct.constr_type_0 = value;
                 elseif (strcmp(field, 'constr_type_e'))
                     obj.model_struct.constr_type_e = value;
 
@@ -278,6 +289,12 @@ classdef acados_ocp_model < handle
                     obj.model_struct.constr_lh = value;
                 elseif (strcmp(field, 'constr_uh'))
                     obj.model_struct.constr_uh = value;
+                elseif (strcmp(field, 'constr_expr_h_0'))
+                    obj.model_struct.constr_expr_h_0 = value;
+                elseif (strcmp(field, 'constr_lh_0'))
+                    obj.model_struct.constr_lh_0 = value;
+                elseif (strcmp(field, 'constr_uh_0'))
+                    obj.model_struct.constr_uh_0 = value;
                 elseif (strcmp(field, 'constr_expr_h_e'))
                     obj.model_struct.constr_expr_h_e = value;
                 elseif (strcmp(field, 'constr_lh_e'))
@@ -360,6 +377,8 @@ classdef acados_ocp_model < handle
                     obj.model_struct.dim_ng_e = value;
                 elseif (strcmp(field, 'dim_nh'))
                     obj.model_struct.dim_nh = value;
+                elseif (strcmp(field, 'dim_nh_0'))
+                    obj.model_struct.dim_nh_0 = value;
                 elseif (strcmp(field, 'dim_nh_e'))
                     obj.model_struct.dim_nh_e = value;
                 elseif (strcmp(field, 'dim_ns'))

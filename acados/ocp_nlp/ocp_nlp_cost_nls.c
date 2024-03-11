@@ -194,6 +194,7 @@ void *ocp_nlp_cost_nls_model_assign(void *config_, void *dims_, void *raw_memory
 
     // default initialization
     model->scaling = 1.0;
+    model->t = 0.0;
 
     // initialize to 1 to update factorization of W in precompute
     model->W_changed = 1;
@@ -525,17 +526,6 @@ void ocp_nlp_cost_nls_memory_set_ux_ptr(struct blasfeo_dvec *ux, void *memory_)
 
 
 
-void ocp_nlp_cost_nls_memory_set_tmp_ux_ptr(struct blasfeo_dvec *tmp_ux, void *memory_)
-{
-    ocp_nlp_cost_nls_memory *memory = memory_;
-
-    memory->tmp_ux = tmp_ux;
-
-    return;
-}
-
-
-
 void ocp_nlp_cost_nls_memory_set_z_alg_ptr(struct blasfeo_dvec *z_alg, void *memory_)
 {
     ocp_nlp_cost_nls_memory *memory = memory_;
@@ -706,8 +696,8 @@ void ocp_nlp_cost_nls_update_qp_matrices(void *config_, void *dims_, void *model
     int ny = dims->ny;
     int ns = dims->ns;
 
-    ext_fun_arg_t ext_fun_type_in[4];
-    void *ext_fun_in[4];
+    ext_fun_arg_t ext_fun_type_in[5];
+    void *ext_fun_in[5];
     ext_fun_arg_t ext_fun_type_out[3];
     void *ext_fun_out[3];
 
@@ -728,6 +718,8 @@ void ocp_nlp_cost_nls_update_qp_matrices(void *config_, void *dims_, void *model
         ext_fun_in[1] = &u_in;
         ext_fun_type_in[2] = BLASFEO_DVEC;
         ext_fun_in[2] = memory->z_alg;
+        ext_fun_type_in[3] = COLMAJ;
+        ext_fun_in[3] = &model->t;
 
         ext_fun_type_out[0] = BLASFEO_DVEC;
         ext_fun_out[0] = &memory->res;  // fun: ny
@@ -811,9 +803,11 @@ void ocp_nlp_cost_nls_update_qp_matrices(void *config_, void *dims_, void *model
             // the product < r, d2_d[x,u] r >, where the cost is 0.5 * norm2(r(x,u))^2
             // exact hessian of ls cost
 
-            // ext_fun_[type_]in 0,1 are the same as before.
+            // ext_fun_[type_]in 0, 1, 2 are the same as before.
             ext_fun_type_in[3] = BLASFEO_DVEC;
             ext_fun_in[3] = &work->tmp_ny;  // fun: ny
+            ext_fun_type_in[4] = COLMAJ;
+            ext_fun_in[4] = &model->t;
 
             ext_fun_type_out[0] = BLASFEO_DMAT;
             ext_fun_out[0] = &work->tmp_nv_nv;   // hess*fun: (nu+nx) * (nu+nx)
@@ -834,9 +828,11 @@ void ocp_nlp_cost_nls_update_qp_matrices(void *config_, void *dims_, void *model
     blasfeo_dvecmulacc(2*ns, &model->Z, 0, memory->ux, nu+nx, &memory->grad, nu+nx);
 
     // slack update function value
+    // tmp_2ns = 2 * z + Z .* slack
     blasfeo_dveccpsc(2*ns, 2.0, &model->z, 0, &work->tmp_2ns, 0);
-    blasfeo_dvecmulacc(2*ns, &model->Z, 0, memory->tmp_ux, nu+nx, &work->tmp_2ns, 0);
-    memory->fun += 0.5 * blasfeo_ddot(2*ns, &work->tmp_2ns, 0, memory->tmp_ux, nu+nx);
+    blasfeo_dvecmulacc(2*ns, &model->Z, 0, memory->ux, nu+nx, &work->tmp_2ns, 0);
+    // fun += .5 * (tmp_2ns .* slack)
+    memory->fun += 0.5 * blasfeo_ddot(2*ns, &work->tmp_2ns, 0, memory->ux, nu+nx);
 
     // scale
     if (model->scaling!=1.0)
@@ -863,14 +859,13 @@ void ocp_nlp_cost_nls_update_qp_matrices(void *config_, void *dims_, void *model
 void ocp_nlp_cost_nls_compute_fun(void *config_, void *dims_, void *model_,
                                   void *opts_, void *memory_, void *work_)
 {
-//    printf("\nerror: ocp_nlp_cost_nls_compute_fun: not implemented yet\n");
-//    exit(1);
-
     ocp_nlp_cost_nls_dims *dims = dims_;
     ocp_nlp_cost_nls_model *model = model_;
     ocp_nlp_cost_nls_opts *opts = opts_;
     ocp_nlp_cost_nls_memory *memory = memory_;
     ocp_nlp_cost_nls_workspace *work = work_;
+
+    struct blasfeo_dvec *ux = memory->ux;
 
     ocp_nlp_cost_nls_cast_workspace(config_, dims, opts_, work_);
 
@@ -881,19 +876,18 @@ void ocp_nlp_cost_nls_compute_fun(void *config_, void *dims_, void *model_,
 
     if (opts->integrator_cost == 0)
     {
-
-        ext_fun_arg_t nls_y_fun_type_in[3];
-        void *nls_y_fun_in[3];
+        ext_fun_arg_t nls_y_fun_type_in[4];
+        void *nls_y_fun_in[4];
         ext_fun_arg_t nls_y_fun_type_out[1];
         void *nls_y_fun_out[1];
 
         struct blasfeo_dvec_args x_in;  // input x of external fun;
         struct blasfeo_dvec_args u_in;  // input u of external fun;
 
-        x_in.x = memory->tmp_ux;
+        x_in.x = ux;
         x_in.xi = nu;
 
-        u_in.x = memory->tmp_ux;
+        u_in.x = ux;
         u_in.xi = 0;
 
         nls_y_fun_type_in[0] = BLASFEO_DVEC_ARGS;
@@ -904,6 +898,9 @@ void ocp_nlp_cost_nls_compute_fun(void *config_, void *dims_, void *model_,
 
         nls_y_fun_type_in[2] = BLASFEO_DVEC;
         nls_y_fun_in[2] = memory->z_alg;
+
+        nls_y_fun_type_in[3] = COLMAJ;
+        nls_y_fun_in[3] = &model->t;
 
         nls_y_fun_type_out[0] = BLASFEO_DVEC;
         nls_y_fun_out[0] = &memory->res;  // fun: ny
@@ -927,8 +924,8 @@ void ocp_nlp_cost_nls_compute_fun(void *config_, void *dims_, void *model_,
 
     // slack update function value
     blasfeo_dveccpsc(2*ns, 2.0, &model->z, 0, &work->tmp_2ns, 0);
-    blasfeo_dvecmulacc(2*ns, &model->Z, 0, memory->tmp_ux, nu+nx, &work->tmp_2ns, 0);
-    memory->fun += 0.5 * blasfeo_ddot(2*ns, &work->tmp_2ns, 0, memory->tmp_ux, nu+nx);
+    blasfeo_dvecmulacc(2*ns, &model->Z, 0, ux, nu+nx, &work->tmp_2ns, 0);
+    memory->fun += 0.5 * blasfeo_ddot(2*ns, &work->tmp_2ns, 0, ux, nu+nx);
 
     // scale
     if (model->scaling!=1.0)
@@ -965,7 +962,6 @@ void ocp_nlp_cost_nls_config_initialize_default(void *config_)
     config->memory_get_W_chol_ptr = &ocp_nlp_cost_nls_memory_get_W_chol_ptr;
     config->model_get_y_ref_ptr = &ocp_nlp_cost_nls_model_get_y_ref_ptr;
     config->memory_set_ux_ptr = &ocp_nlp_cost_nls_memory_set_ux_ptr;
-    config->memory_set_tmp_ux_ptr = &ocp_nlp_cost_nls_memory_set_tmp_ux_ptr;
     config->memory_set_z_alg_ptr = &ocp_nlp_cost_nls_memory_set_z_alg_ptr;
     config->memory_set_dzdux_tran_ptr = &ocp_nlp_cost_nls_memory_set_dzdux_tran_ptr;
     config->memory_set_RSQrq_ptr = &ocp_nlp_cost_nls_memory_set_RSQrq_ptr;

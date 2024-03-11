@@ -82,7 +82,7 @@ model_name = 'ocp_pendulum';
 
 
 %% create model entries
-model = pendulum_on_cart_model;
+model = pendulum_on_cart_model();
 
 % dims
 T = N*h; % horizon length time
@@ -240,8 +240,6 @@ ocp = acados_ocp(ocp_model, ocp_opts);
 % ocp
 % disp('ocp.C_ocp');
 % disp(ocp.C_ocp);
-% disp('ocp.C_ocp_ext_fun');
-% disp(ocp.C_ocp_ext_fun);
 %ocp.model_struct
 
 

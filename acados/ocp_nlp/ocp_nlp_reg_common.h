@@ -48,7 +48,7 @@ extern "C" {
 
 /* dims */
 
-//typedef ocp_qp_dims ocp_nlp_reg_dims;
+// same as qp_dims
 typedef struct
 {
     int *nx;
@@ -80,7 +80,7 @@ typedef struct
     acados_size_t (*opts_calculate_size)(void);
     void *(*opts_assign)(void *raw_memory);
     void (*opts_initialize_default)(void *config, ocp_nlp_reg_dims *dims, void *opts);
-    void (*opts_set)(void *config, ocp_nlp_reg_dims *dims, void *opts, char *field, void* value);
+    void (*opts_set)(void *config, void *opts, const char *field, void* value);
     /* memory */
     acados_size_t (*memory_calculate_size)(void *config, ocp_nlp_reg_dims *dims, void *opts);
     void *(*memory_assign)(void *config, ocp_nlp_reg_dims *dims, void *opts, void *raw_memory);
@@ -95,7 +95,9 @@ typedef struct
     void (*memory_set_pi_ptr)(ocp_nlp_reg_dims *dims, struct blasfeo_dvec *vec, void *memory);
     void (*memory_set_lam_ptr)(ocp_nlp_reg_dims *dims, struct blasfeo_dvec *vec, void *memory);
     /* functions */
-    void (*regularize_hessian)(void *config, ocp_nlp_reg_dims *dims, void *opts, void *memory);
+    void (*regularize)(void *config, ocp_nlp_reg_dims *dims, void *opts, void *memory);
+    void (*regularize_lhs)(void *config, ocp_nlp_reg_dims *dims, void *opts, void *memory);
+    void (*regularize_rhs)(void *config, ocp_nlp_reg_dims *dims, void *opts, void *memory);
     void (*correct_dual_sol)(void *config, ocp_nlp_reg_dims *dims, void *opts, void *memory);
 } ocp_nlp_reg_config;
 

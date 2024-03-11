@@ -39,7 +39,7 @@ from subprocess import DEVNULL, STDOUT, call
 import numpy as np
 from casadi import DM, MX, SX, CasadiMeta, Function
 
-ALLOWED_CASADI_VERSIONS = ('3.6.3', '3.5.6', '3.5.5', '3.5.4', '3.5.3', '3.5.2', '3.5.1', '3.4.5', '3.4.0')
+ALLOWED_CASADI_VERSIONS = ('3.6.4', '3.6.3', '3.6.2', '3.6.1', '3.5.6', '3.5.5', '3.5.4', '3.5.3', '3.5.2', '3.5.1', '3.4.5', '3.4.0')
 
 TERA_VERSION = "0.0.34"
 
@@ -49,6 +49,11 @@ PLATFORM2TERA = {
     "win32": "windows"
 }
 
+
+def check_if_square(mat: np.ndarray, name: str):
+    if mat.shape[0] != mat.shape[1]:
+        raise ValueError(f"Matrix {name} must be square, got shape {mat.shape}.")
+    return
 
 def get_acados_path():
     ACADOS_PATH = os.environ.get('ACADOS_SOURCE_DIR')
@@ -85,7 +90,7 @@ def check_casadi_version():
     if casadi_version in ALLOWED_CASADI_VERSIONS:
         return
     else:
-        msg =  'Warning: Please note that the following versions of CasADi  are '
+        msg =  'Warning: Please note that the following versions of CasADi are '
         msg += 'officially supported: {}.\n '.format(" or ".join(ALLOWED_CASADI_VERSIONS))
         msg += 'If there is an incompatibility with the CasADi generated code, '
         msg += 'please consider changing your CasADi version.\n'
@@ -142,42 +147,31 @@ def casadi_length(x):
         raise Exception("casadi_length expects one of the following types: casadi.MX, casadi.SX."
                         + " Got: " + str(type(x)))
 
-
-def make_model_consistent(model):
-    x = model.x
-    xdot = model.xdot
-    u = model.u
-    z = model.z
-    p = model.p
-
-    if isinstance(x, MX):
-        symbol = MX.sym
-    elif isinstance(x, SX):
-        symbol = SX.sym
-    else:
-        raise Exception("model.x must be casadi.SX or casadi.MX, got {}".format(type(x)))
-
-    if is_empty(p):
-        model.p = symbol('p', 0, 0)
-
-    if is_empty(z):
-        model.z = symbol('z', 0, 0)
-
-    return model
-
-def get_lib_ext():
-    lib_ext = '.so'
+def get_shared_lib_ext():
     if sys.platform == 'darwin':
-        lib_ext = '.dylib'
+        return '.dylib'
     elif os.name == 'nt':
-        lib_ext = ''
+        return '.dll'
+    else:
+        return '.so'
 
-    return lib_ext
+def get_shared_lib_dir():
+    if os.name == 'nt':
+        return 'bin'
+    else:
+        return 'lib'
+
+def get_shared_lib_prefix():
+    if os.name == 'nt':
+        return ''
+    else:
+        return 'lib'
 
 def get_tera():
     tera_path = get_tera_exec_path()
     acados_path = get_acados_path()
 
+    # check if tera exists and is executable
     if os.path.exists(tera_path) and os.access(tera_path, os.X_OK):
         return tera_path
 
@@ -202,27 +196,38 @@ def get_tera():
     msg += 'Do you wish to set up Tera renderer automatically?\n'
     msg += 'y/N? (press y to download tera or any key for manual installation)\n'
 
-    if input(msg) == 'y':
-        print("Dowloading {}".format(url))
-        with urllib.request.urlopen(url) as response, open(tera_path, 'wb') as out_file:
-            shutil.copyfileobj(response, out_file)
-        print("Successfully downloaded t_renderer.")
-        os.chmod(tera_path, 0o755)
-        return tera_path
+    if input(msg) != 'y':
+        msg_cancel = "\nYou cancelled automatic download.\n\n"
+        msg_cancel += manual_install
+        msg_cancel += "Once installed re-run your script.\n\n"
+        print(msg_cancel)
 
-    msg_cancel = "\nYou cancelled automatic download.\n\n"
-    msg_cancel += manual_install
-    msg_cancel += "Once installed re-run your script.\n\n"
-    print(msg_cancel)
+        sys.exit(1)
 
-    sys.exit(1)
+    # check if parent directory exists otherwise create it
+    tera_dir = os.path.split(tera_path)[0]
+    if not os.path.exists(tera_dir):
+        print(f"Creating directory {tera_dir}")
+        os.makedirs(tera_dir)
+    # Download tera
+    print(f"Dowloading {url}")
+    with urllib.request.urlopen(url) as response, open(tera_path, 'wb') as out_file:
+        shutil.copyfileobj(response, out_file)
+    print("Successfully downloaded t_renderer.")
+    # make executable
+    os.chmod(tera_path, 0o755)
+    print("Successfully downloaded t_renderer.")
+    return tera_path
+
+
 
 
 def render_template(in_file, out_file, output_dir, json_path, template_glob=None):
 
     acados_path = os.path.dirname(os.path.abspath(__file__))
     if template_glob is None:
-        template_glob = os.path.join(acados_path, 'c_templates_tera', '**', '*')
+        head, in_file = os.path.split(in_file)
+        template_glob = os.path.join(acados_path, 'c_templates_tera', head, '**', '*')
     cwd = os.getcwd()
 
     if not os.path.exists(output_dir):
@@ -249,7 +254,10 @@ def make_object_json_dumpable(input):
     if isinstance(input, (np.ndarray)):
         return input.tolist()
     elif isinstance(input, (SX)):
-        return input.serialize()
+        try:
+            return input.serialize()
+        except: # for older CasADi versions
+            return ''
     elif isinstance(input, (MX)):
         # NOTE: MX expressions can not be serialized, only Functions.
         return input.__str__()
@@ -271,15 +279,6 @@ def format_class_dict(d):
         out_key = k.split('__', 1)[-1]
         out[k.replace(k, out_key)] = v
     return out
-
-
-def get_ocp_nlp_layout() -> dict:
-    python_interface_path = get_python_interface_path()
-    abs_path = os.path.join(python_interface_path, 'acados_layout.json')
-    with open(abs_path, 'r') as f:
-        ocp_nlp_layout = json.load(f)
-    return ocp_nlp_layout
-
 
 def get_default_simulink_opts() -> dict:
     python_interface_path = get_python_interface_path()
@@ -322,6 +321,10 @@ def J_to_idx_slack(J):
     if not i_idx == ncol:
             raise Exception('J_to_idx_slack: J must contain a 1 in every column!')
     return idx
+
+
+def print_J_to_idx_note():
+    print("NOTE: J* matrix is converted to zero based vector idx* vector, which is returned here.")
 
 
 def acados_dae_model_json_dump(model):

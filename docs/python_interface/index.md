@@ -16,6 +16,7 @@ There is a `ctypes` based wrapper which is the default and a `cython` based wrap
 
 ## Optimal Control Problem description
 The Python interface relies on the same problem formulation as the MATLAB interface [see here](https://github.com/acados/acados/blob/master/docs/problem_formulation/problem_formulation_ocp_mex.pdf).
+Currently, Python >= 3.8 is required.
 
 ## Installation
 1. Compile and install `acados` by following the [`CMake` installation instructions](../installation/index.md).
@@ -23,7 +24,7 @@ The Python interface relies on the same problem formulation as the MATLAB interf
 2. Optional: Recommended.
     Create a Python virtual environment using `virtualenv`.
     ```
-    virtualenv env --python=/usr/bin/python3.7
+    virtualenv env --python=/usr/bin/python3
     # Source the environment
     source env/bin/activate
     ```
@@ -104,7 +105,7 @@ The interface to interact with the acados OCP solver in C is based on [ctypes](h
 
 Additionally, there is the option to use a Cython based wrapper around the C part.
 This offers faster interaction with the solver, because getter and setter calls, which include shape checking are done in compiled C code.
-The cython based wrapper is called [`AcadosOcpSolverCython`](#acados_template.acados_ocp.AcadosOcpSolverCython) and was added in [PR #791](https://github.com/acados/acados/pull/791).
+The cython based wrapper is called [`AcadosOcpSolverCython`](#acados_template.acados_ocp_solver.AcadosOcpSolverCython) and was added in [PR #791](https://github.com/acados/acados/pull/791).
 `AcadosOcpSolverCython` and `AcadosOcpSolver` offer the same functionality and equivalent behavior is ensured in CI tests.
 
 ``` eval_rst
@@ -122,6 +123,35 @@ The cython based wrapper is called [`AcadosOcpSolverCython`](#acados_template.ac
     :private-members:
     :exclude-members:
 ```
+
+``` eval_rst
+.. automodule:: acados_template.acados_ocp_cost
+    :members:
+    :private-members:
+    :exclude-members:
+```
+
+``` eval_rst
+.. automodule:: acados_template.acados_ocp_constraints
+    :members:
+    :private-members:
+    :exclude-members:
+```
+
+``` eval_rst
+.. automodule:: acados_template.acados_ocp_options
+    :members:
+    :private-members:
+    :exclude-members:
+```
+
+``` eval_rst
+.. automodule:: acados_template.acados_dims
+    :members:
+    :private-members:
+    :exclude-members:
+```
+
 
 
 <!-- ## acados model -->
@@ -163,3 +193,17 @@ If cross-platform compatibility is required `CMake` can be used to build the bin
     :exclude-members:
 ```
 
+
+## acados multi-phase OCP
+Advanced feature interface to formulate multi-phase OCPs.
+
+Added in
+[#1004](https://github.com/acados/acados/pull/1004) and
+[#1007](https://github.com/acados/acados/pull/1007).
+
+``` eval_rst
+.. automodule:: acados_template.acados_multiphase_ocp
+    :members:
+    :private-members:
+    :exclude-members:
+```

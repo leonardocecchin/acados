@@ -152,7 +152,7 @@ void sim_dims_get_from_attr(sim_config *config, void *dims, const char *field, i
     {
         sim_dims_get(config, dims, "nu", &dims_out[0]);
     }
-    else if (!strcmp(field, "T"))
+    else if (!strcmp(field, "T") || !strcmp(field, "t0"))
     {
         dims_out[0] = 1;
     }
@@ -332,8 +332,6 @@ sim_solver *sim_assign(sim_config *config, void *dims, void *opts_, void *raw_me
     solver->config = config;
     solver->dims = dims;
     solver->opts = opts_;
-
-    // TODO(dimitris): CHECK ALIGNMENT!
 
     solver->mem = config->memory_assign(config, dims, opts_, c_ptr);
     c_ptr += config->memory_calculate_size(config, dims, opts_);

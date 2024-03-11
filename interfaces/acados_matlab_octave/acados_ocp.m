@@ -120,6 +120,9 @@ classdef acados_ocp < handle
             if (strcmp(obj.model_struct.constr_type, 'auto'))
                 obj.model_struct = detect_constr(obj.model_struct, 0);
             end
+            if (strcmp(obj.model_struct.constr_type_0, 'auto'))
+                obj.model_struct = detect_constr(obj.model_struct, 0, true);
+            end
             if (strcmp(obj.model_struct.constr_type_e, 'auto'))
                 obj.model_struct = detect_constr(obj.model_struct, 1);
             end
@@ -194,14 +197,14 @@ classdef acados_ocp < handle
 
             % generate templated solver
             if nargin < 3
-                simulink_opts = get_acados_simulink_opts;
+                simulink_opts = get_acados_simulink_opts();
             end
             obj.acados_ocp_nlp_json = set_up_acados_ocp_nlp_json(obj, simulink_opts);
             ocp_generate_c_code(obj);
 
             % templated MEX
             return_dir = pwd();
-            obj.code_gen_dir = obj.acados_ocp_nlp_json.code_export_directory; 
+            obj.code_gen_dir = obj.acados_ocp_nlp_json.code_export_directory;
             cd(obj.code_gen_dir)
 
             mex_solver_name = sprintf('%s_mex_solver', obj.model_struct.name);

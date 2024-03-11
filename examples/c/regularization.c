@@ -46,7 +46,6 @@
 
 int main()
 {
-	
 	printf("\nregularization example\n\n");
 
 	int ii, jj;
@@ -102,10 +101,8 @@ int main()
 
 	config->opts_initialize_default(config, dims, opts);
 
-	double delta = 1e-4;
 	double epsilon = 1e-4;
-//	config->opts_set(config, dims, opts, "delta", &delta);
-	config->opts_set(config, dims, opts, "epsilon", &epsilon);
+	config->opts_set(config, opts, "epsilon", &epsilon);
 
     /************************************************
      * memory
@@ -139,7 +136,7 @@ int main()
 		blasfeo_print_dmat(nu[ii]+nx[ii], nu[ii]+nx[ii], RSQrq+ii, 0, 0);
 
 	// regularization
-	config->regularize_hessian(config, dims, opts, memory);
+	config->regularize(config, dims, opts, memory);
 
 	printf("\nafter regularization\n\n");
 	for(ii=0; ii<=N; ii++)

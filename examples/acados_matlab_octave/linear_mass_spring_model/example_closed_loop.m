@@ -69,7 +69,7 @@ ocp_cost_type = 'linear_ls';
 
 %% setup problem
 % linear mass-spring system
-model = linear_mass_spring_model;
+model = linear_mass_spring_model();
 % dims
 T = 10.0; % horizon length time
 nx = model.nx; % number of states
@@ -175,7 +175,6 @@ ocp_opts.opts_struct
 ocp = acados_ocp(ocp_model, ocp_opts);
 ocp
 % ocp.C_ocp
-% ocp.C_ocp_ext_fun
 
 
 
@@ -212,18 +211,9 @@ sim_opts.set('num_steps', sim_num_steps);
 sim_opts.set('method', sim_method);
 sim_opts.set('sens_forw', sim_sens_forw);
 
-sim_opts.opts_struct
-
-
-
 %% acados sim
 % create sim
 sim = acados_sim(sim_model, sim_opts);
-sim
-sim.C_sim
-sim.C_sim_ext_fun
-
-
 
 %% closed loop simulation
 n_sim = 100;

@@ -75,10 +75,10 @@ qp_solver_iter_max = 1000; % default is 50; OSQP needs a lot sometimes.
 % can vary for integrators
 sim_method_num_stages = 1 * ones(N,1);
 sim_method_num_steps = ones(N,1);
-% sim_method_num_steps(1:10) = 2;
+sim_method_num_stages(3:end) = 2;
 
 %% model dynamics
-model = pendulum_on_cart_model;
+model = pendulum_on_cart_model();
 
 %% model to create the solver
 ocp_model = acados_ocp_model();
@@ -300,16 +300,54 @@ cost_val_ocp = ocp.get_cost();
 for stage = [0, N-1]
     % Note loop over field doesnt work because stupid matlab diff between
     % chars and strings
+    % dynamics
     field = 'qp_A';
     disp(strcat(field, " at stage ", num2str(stage), " = "));
     ocp.get(field, stage)
     field = 'qp_B';
     disp(strcat(field, " at stage ", num2str(stage), " = "));
     ocp.get(field, stage)
+    field = 'qp_b';
+    disp(strcat(field, " at stage ", num2str(stage), " = "));
+    ocp.get(field, stage)
+
+    % cost
     field = 'qp_R';
     disp(strcat(field, " at stage ", num2str(stage), " = "));
     ocp.get(field, stage)
     field = 'qp_Q';
+    disp(strcat(field, " at stage ", num2str(stage), " = "));
+    ocp.get(field, stage)
+    field = 'qp_r';
+    disp(strcat(field, " at stage ", num2str(stage), " = "));
+    ocp.get(field, stage)
+
+    % constraints
+    field = 'qp_C';
+    disp(strcat(field, " at stage ", num2str(stage), " = "));
+    ocp.get(field, stage)
+    field = 'qp_D';
+    disp(strcat(field, " at stage ", num2str(stage), " = "));
+    ocp.get(field, stage)
+
+    field = 'qp_lg';
+    disp(strcat(field, " at stage ", num2str(stage), " = "));
+    ocp.get(field, stage)
+    field = 'qp_ug';
+    disp(strcat(field, " at stage ", num2str(stage), " = "));
+    ocp.get(field, stage)
+
+    field = 'qp_lbx';
+    disp(strcat(field, " at stage ", num2str(stage), " = "));
+    ocp.get(field, stage)
+    field = 'qp_ubx';
+    disp(strcat(field, " at stage ", num2str(stage), " = "));
+    ocp.get(field, stage)
+
+    field = 'qp_lbu';
+    disp(strcat(field, " at stage ", num2str(stage), " = "));
+    ocp.get(field, stage)
+    field = 'qp_ubu';
     disp(strcat(field, " at stage ", num2str(stage), " = "));
     ocp.get(field, stage)
 end

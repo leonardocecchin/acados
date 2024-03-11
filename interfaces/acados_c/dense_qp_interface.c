@@ -167,8 +167,6 @@ dense_qp_solver *dense_qp_assign(qp_solver_config *config, dense_qp_dims *dims, 
     solver->dims = dims;
     solver->opts = opts_;
 
-    // TODO(dimitris): CHECK ALIGNMENT!
-
     solver->mem = config->memory_assign(config, dims, opts_, c_ptr);
     c_ptr += config->memory_calculate_size(config, dims, opts_);
 
@@ -282,14 +280,6 @@ bool dense_qp_set_field_double_array(const char *field, double *arr, dense_qp_in
     {
         d_dense_qp_set_zu(arr, qp_in);
     }
-    else if (!strcmp(field, "ls"))
-    {
-        d_dense_qp_set_ls(arr, qp_in);
-    }
-    else if (!strcmp(field, "us"))
-    {
-        d_dense_qp_set_us(arr, qp_in);
-    }
     else
     {
         printf("\n%s is an unknown double array field in dense_qp_in!\n", field);
@@ -371,14 +361,6 @@ bool dense_qp_get_field_double_array(const char *field, dense_qp_in *qp_in, doub
     else if (!strcmp(field, "zu"))
     {
         d_dense_qp_get_zu(qp_in, arr);
-    }
-    else if (!strcmp(field, "ls"))
-    {
-        d_dense_qp_get_ls(qp_in, arr);
-    }
-    else if (!strcmp(field, "us"))
-    {
-        d_dense_qp_get_us(qp_in, arr);
     }
     else
     {

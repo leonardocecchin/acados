@@ -29,7 +29,7 @@
 #
 
 
-if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC") # TODO: make this work on windodws?!
+if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
 
 configure_file(chain_model/chain_model.h.in ${CMAKE_CURRENT_SOURCE_DIR}/chain_model/chain_model.h @ONLY)
 
@@ -280,5 +280,11 @@ add_test(ocp_qp ocp_qp)
 add_executable(dense_qp dense_qp.c)
 target_link_libraries(dense_qp acados)
 add_test(dense_qp dense_qp)
+
+# regularization
+add_executable(regularization regularization.c)
+target_link_libraries(regularization acados)
+add_test(regularization regularization)
+
 
 endif()

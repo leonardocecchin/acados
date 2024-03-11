@@ -1064,10 +1064,13 @@ static int osqp_init_data(OSQPData *data, OSQPSettings *settings, OSQPWorkspace 
 
     // Initialize linear system solver structure
     // NOTE: mallocs
-    work->linsys_solver = init_linsys_solver(work->data->P, work->data->A, work->settings->sigma,
-                                             work->rho_vec, work->settings->linsys_solver, 0);
+    if(init_linsys_solver(&(work->linsys_solver), work->data->P, work->data->A, work->settings->sigma,
+                                             work->rho_vec, work->settings->linsys_solver, 0)){
+        c_eprint("Failed to initialize %s linear system solver",
+                 LINSYS_SOLVER_NAME[work->settings->linsys_solver]);
+        return 0;
+    }
 
-    if (!work->linsys_solver) return 0;
 
     // Initialize solution to 0
     set_vec(n, 0.0, work->solution->x);
@@ -1399,6 +1402,12 @@ void ocp_qp_osqp_eval_sens(void *config_, void *qp_in, void *qp_out, void *opts_
 }
 
 
+void ocp_qp_osqp_solver_get(void *config_, void *qp_in_, void *qp_out_, void *opts_, void *mem_, const char *field, int stage, void* value, int size1, int size2)
+{
+    printf("\nerror: ocp_qp_osqp_solver_get: not implemented yet\n");
+    exit(1);
+}
+
 
 void ocp_qp_osqp_config_initialize_default(void *config_)
 {
@@ -1416,6 +1425,7 @@ void ocp_qp_osqp_config_initialize_default(void *config_)
     config->evaluate = &ocp_qp_osqp;
     config->eval_sens = &ocp_qp_osqp_eval_sens;
     config->memory_reset = &ocp_qp_osqp_memory_reset;
+    config->solver_get = &ocp_qp_osqp_solver_get;
 
     return;
 }

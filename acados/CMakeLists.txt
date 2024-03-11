@@ -136,15 +136,14 @@ if(ACADOS_WITH_OOQP)
     target_link_libraries(acados PUBLIC ooqp)
 endif()
 
-target_link_libraries(acados PUBLIC hpipm blasfeo m)
+if(CMAKE_C_COMPILER_ID MATCHES MSVC) # no explicit math library
+    target_link_libraries(acados PUBLIC hpipm blasfeo)
+else() # add explicit math library
+    target_link_libraries(acados PUBLIC hpipm blasfeo m)
+endif()
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)
     target_compile_definitions(acados PRIVATE DEBUG)
-endif()
-
-# Enable or disable timings
-if(NOT CMAKE_BUILD_TYPE MATCHES "Debug")
-    target_compile_definitions(acados PUBLIC MEASURE_TIMINGS)
 endif()
 
 if(EXT_DEP MATCHES OFF)
@@ -159,8 +158,6 @@ if(COVERAGE MATCHES "lcov")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -fprofile-arcs -ftest-coverage")
     target_link_libraries(acados PRIVATE --coverage)
 endif()
-
-target_compile_definitions(acados PRIVATE ALIGNMENT=64)
 
 install(TARGETS acados EXPORT acadosTargets
     LIBRARY DESTINATION lib
