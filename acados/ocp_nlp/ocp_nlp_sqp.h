@@ -64,7 +64,7 @@ typedef struct
     int ext_qp_res;      // compute external QP residuals (i.e. at SQP level) at each SQP iteration (for debugging)
     int qp_warm_start;   // qp_warm_start in all but the first sqp iterations
     bool warm_start_first_qp; // to set qp_warm_start in first iteration
-    int rti_phase;       // only phase 0 at the moment 
+    int rti_phase;       // only phase 0 at the moment
     int initialize_t_slacks;  // 0-false or 1-true
 
 } ocp_nlp_sqp_opts;
@@ -104,6 +104,7 @@ typedef struct
     double time_sim_la;
     double time_sim_ad;
     double time_solution_sensitivities;
+    double alpha;
 
     // statistics
     double *stat;
@@ -132,10 +133,6 @@ typedef struct
 {
     ocp_nlp_workspace *nlp_work;
 
-    // temp QP in & out (to be used as workspace in param sens)
-    ocp_qp_in *tmp_qp_in;
-    ocp_qp_out *tmp_qp_out;
-
     // qp residuals
     ocp_qp_res *qp_res;
     ocp_qp_res_ws *qp_res_ws;
@@ -159,6 +156,11 @@ void ocp_nlp_sqp_config_initialize_default(void *config_);
 //
 int ocp_nlp_sqp_precompute(void *config_, void *dims_, void *nlp_in_, void *nlp_out_,
                 void *opts_, void *mem_, void *work_);
+//
+void ocp_nlp_sqp_eval_lagr_grad_p(void *config_, void *dims_, void *nlp_in_, void *opts_, void *mem_, void *work_,
+                            const char *field, void *grad_p);
+//
+void ocp_nlp_sqp_get(void *config_, void *dims_, void *mem_, const char *field, void *return_value_);
 
 #ifdef __cplusplus
 } /* extern "C" */

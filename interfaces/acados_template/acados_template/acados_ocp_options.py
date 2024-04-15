@@ -71,6 +71,7 @@ class AcadosOcpOptions:
         self.__nlp_solver_tol_comp = 1e-6
         self.__nlp_solver_max_iter = 100
         self.__nlp_solver_ext_qp_res = 0
+        self.__rti_log_residuals = 0
         self.__Tsim = None
         self.__print_level = 0
         self.__initialize_t_slacks = 0
@@ -91,6 +92,8 @@ class AcadosOcpOptions:
         self.__full_step_dual = 0
         self.__eps_sufficient_descent = 1e-4
         self.__hpipm_mode = 'BALANCE'
+        self.__with_solution_sens_wrt_params = False
+        self.__with_value_sens_wrt_params = False
         # TODO: move those out? they are more about generation than about the acados OCP solver.
         self.__ext_fun_compile_flags = '-O2'
         self.__model_external_shared_lib_dir = None
@@ -99,6 +102,8 @@ class AcadosOcpOptions:
         self.__custom_update_header_filename = ''
         self.__custom_templates = []
         self.__custom_update_copy = True
+        self.__as_rti_iter = 1
+        self.__as_rti_level = 4
 
     @property
     def qp_solver(self):
@@ -405,6 +410,31 @@ class AcadosOcpOptions:
         """
         return self.__qp_solver_iter_max
 
+
+    @property
+    def as_rti_iter(self):
+        """
+        Maximum number of iterations in the advanced-step real-time iteration.
+        Default: 1
+        """
+        return self.__as_rti_iter
+
+
+    @property
+    def as_rti_level(self):
+        """
+        Level of the advanced-step real-time iteration.
+
+        LEVEL-A: 0
+        LEVEL-B: 1
+        LEVEL-C: 2
+        LEVEL-D: 3
+        STANDARD_RTI: 4
+
+        Default: 4
+        """
+        return self.__as_rti_level
+
     @property
     def tol(self):
         """
@@ -506,6 +536,17 @@ class AcadosOcpOptions:
         Default: 0.
         """
         return self.__nlp_solver_ext_qp_res
+
+
+    @property
+    def rti_log_residuals(self):
+        """Determines if residuals are computed and logged within RTI / AS-RTI iterations (for debugging).
+
+        Type: int; 0 or 1;
+        Default: 0.
+        """
+        return self.__rti_log_residuals
+
 
     @property
     def nlp_solver_tol_comp(self):
@@ -626,6 +667,21 @@ class AcadosOcpOptions:
         """
         return self.__cost_discretization
 
+    @property
+    def with_solution_sens_wrt_params(self):
+        """
+        Flag indicating whether solution sensitivities wrt. parameters can be computed.
+        """
+        return self.__with_solution_sens_wrt_params
+
+
+    @property
+    def with_value_sens_wrt_params(self):
+        """
+        Flag indicating whether value function sensitivities wrt. parameters can be computed.
+        """
+        return self.__with_value_sens_wrt_params
+
     @qp_solver.setter
     def qp_solver(self, qp_solver):
         qp_solvers = ('PARTIAL_CONDENSING_HPIPM', \
@@ -664,6 +720,20 @@ class AcadosOcpOptions:
         else:
             raise Exception('Invalid hpipm_mode value. Possible values are:\n\n' \
                     + ',\n'.join(hpipm_modes) + '.\n\nYou have: ' + hpipm_mode + '.\n\n')
+
+    @with_solution_sens_wrt_params.setter
+    def with_solution_sens_wrt_params(self, with_solution_sens_wrt_params):
+        if isinstance(with_solution_sens_wrt_params, bool):
+            self.__with_solution_sens_wrt_params = with_solution_sens_wrt_params
+        else:
+            raise Exception('Invalid with_solution_sens_wrt_params value. Expected bool.')
+
+    @with_value_sens_wrt_params.setter
+    def with_value_sens_wrt_params(self, with_value_sens_wrt_params):
+        if isinstance(with_value_sens_wrt_params, bool):
+            self.__with_value_sens_wrt_params = with_value_sens_wrt_params
+        else:
+            raise Exception('Invalid with_value_sens_wrt_params value. Expected bool.')
 
     @ext_fun_compile_flags.setter
     def ext_fun_compile_flags(self, ext_fun_compile_flags):
@@ -877,6 +947,21 @@ class AcadosOcpOptions:
         else:
             raise Exception('Invalid qp_solver_iter_max value. qp_solver_iter_max must be a positive int.')
 
+    @as_rti_iter.setter
+    def as_rti_iter(self, as_rti_iter):
+        if isinstance(as_rti_iter, int) and as_rti_iter >= 0:
+            self.__as_rti_iter = as_rti_iter
+        else:
+            raise Exception('Invalid as_rti_iter value. as_rti_iter must be a nonnegative int.')
+
+    @as_rti_level.setter
+    def as_rti_level(self, as_rti_level):
+        if as_rti_level in [0, 1, 2, 3, 4]:
+            self.__as_rti_level = as_rti_level
+        else:
+            raise Exception('Invalid as_rti_level value must be in [0, 1, 2, 3, 4].')
+
+
     @qp_solver_ric_alg.setter
     def qp_solver_ric_alg(self, qp_solver_ric_alg):
         if qp_solver_ric_alg in [0, 1]:
@@ -981,6 +1066,13 @@ class AcadosOcpOptions:
             self.__nlp_solver_ext_qp_res = nlp_solver_ext_qp_res
         else:
             raise Exception('Invalid nlp_solver_ext_qp_res value. nlp_solver_ext_qp_res must be in [0, 1].')
+
+    @rti_log_residuals.setter
+    def rti_log_residuals(self, rti_log_residuals):
+        if rti_log_residuals in [0, 1]:
+            self.__rti_log_residuals = rti_log_residuals
+        else:
+            raise Exception('Invalid rti_log_residuals value. rti_log_residuals must be in [0, 1].')
 
     @nlp_solver_tol_comp.setter
     def nlp_solver_tol_comp(self, nlp_solver_tol_comp):

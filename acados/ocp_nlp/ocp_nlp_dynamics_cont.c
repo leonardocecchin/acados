@@ -182,6 +182,10 @@ void ocp_nlp_dynamics_cont_dims_get(void *config_, void *dims_, const char *fiel
     {
         *value = dims->nx1;
     }
+    else if (!strcmp(field, "np"))
+    {
+        // np dimension not needed
+    }
     else
     {
         // get GNSF dims from integrator module
@@ -309,6 +313,12 @@ void ocp_nlp_dynamics_cont_opts_set(void *config_, void *opts_, const char *fiel
         }
         config->sim_solver->opts_set(config->sim_solver, opts->sim_solver, "sens_adj", &tmp_bool);
         config->sim_solver->opts_set(config->sim_solver, opts->sim_solver, "sens_hess", &tmp_bool);
+    }
+    else if(!strcmp(field, "with_solution_sens_wrt_params"))
+    {
+        // Not implemented yet
+        // int *int_ptr = value;
+        // opts->with_solution_sens_wrt_params = *int_ptr;
     }
     else
     {
@@ -533,7 +543,7 @@ void ocp_nlp_dynamics_cont_memory_set(void *config_, void *dims_, void *mem_, co
 
     sim_config *sim = config->sim_solver;
 
-    if (!strcmp(field, "W_chol") || !strcmp(field, "cost_fun") || !strcmp(field, "cost_hess") || !strcmp(field, "cost_grad")
+    if (!strcmp(field, "W_chol") || !strcmp(field, "W_chol_diag") || !strcmp(field, "cost_fun") || !strcmp(field, "outer_hess_is_diag") || !strcmp(field, "cost_hess") || !strcmp(field, "cost_grad")
          || !strcmp(field, "y_ref"))
     {
         sim->memory_set(sim, dims->sim, mem->sim_solver, field, value);
@@ -566,6 +576,19 @@ void ocp_nlp_dynamics_cont_memory_get(void *config_, void *dims_, void *mem_, co
 
 }
 
+
+void ocp_nlp_dynamics_cont_memory_get_params_grad(void *config, void *dims, void *opts, void *memory, int index, struct blasfeo_dvec *out, int offset)
+{
+    printf("\nerror: ocp_nlp_dynamics_cont_memory_params_grad: not implemented\n");
+    exit(1);
+}
+
+
+void ocp_nlp_dynamics_cont_memory_get_params_lag_grad(void *config, void *dims, void *opts, void *memory, int index, struct blasfeo_dvec *out, int offset)
+{
+    printf("\nerror: ocp_nlp_dynamics_cont_memory_params_lag_grad: not implemented\n");
+    exit(1);
+}
 
 
 /************************************************
@@ -818,6 +841,7 @@ void ocp_nlp_dynamics_cont_update_qp_matrices(void *config_, void *dims_, void *
         {
             blasfeo_dgemv_n(nu+nx, nx1, -1.0, mem->BAbt, 0, 0, mem->pi, 0, 0.0, &mem->adj, 0, &mem->adj, 0);
         }
+        // adj[nu+nx: nu+nx+nx1] = pi
         blasfeo_dveccp(nx1, mem->pi, 0, &mem->adj, nu+nx);
     }
 
@@ -933,6 +957,87 @@ void ocp_nlp_dynamics_cont_compute_fun(void *config_, void *dims_, void *model_,
 
 
 
+
+void ocp_nlp_dynamics_cont_compute_fun_and_adj(void *config_, void *dims_, void *model_, void *opts_, void *mem_, void *work_)
+{
+    ocp_nlp_dynamics_cont_cast_workspace(config_, dims_, opts_, work_, mem_);
+
+    ocp_nlp_dynamics_config *config = config_;
+    ocp_nlp_dynamics_cont_dims *dims = dims_;
+    ocp_nlp_dynamics_cont_opts *opts = opts_;
+    ocp_nlp_dynamics_cont_workspace *work = work_;
+    ocp_nlp_dynamics_cont_memory *mem = mem_;
+    ocp_nlp_dynamics_cont_model *model = model_;
+
+    struct blasfeo_dvec *ux = mem->ux;
+    struct blasfeo_dvec *ux1 = mem->ux1;
+
+    int nx = dims->nx;
+    int nu = dims->nu;
+    // int nz = dims->nz;
+    int nx1 = dims->nx1;
+    int nu1 = dims->nu1;
+
+    // setup model
+    work->sim_in->model = model->sim_model;
+    work->sim_in->T = model->T;
+
+    // pass state and control to integrator
+    blasfeo_unpack_dvec(nu, ux, 0, work->sim_in->u, 1);
+    blasfeo_unpack_dvec(nx, ux, nu, work->sim_in->x, 1);
+
+    if (mem->set_sim_guess!=NULL && mem->set_sim_guess[0])
+    {
+        config->sim_solver->memory_set(config->sim_solver, work->sim_in->dims, mem->sim_solver,
+                                       "guesses_blasfeo", mem->sim_guess);
+        // only use/pass the initial guess once
+        mem->set_sim_guess[0] = false;
+    }
+
+    // adjoint seed
+    for (int jj = 0; jj < nx + nu; jj++)
+        work->sim_in->S_adj[jj] = 0.0;
+    blasfeo_unpack_dvec(nx1, mem->pi, 0, work->sim_in->S_adj, 1);
+
+    // backup sens options
+    bool sens_forw_bkp, sens_adj_bkp, sens_hess_bkp;
+    config->sim_solver->opts_get(config->sim_solver, opts->sim_solver, "sens_forw", &sens_forw_bkp);
+    config->sim_solver->opts_get(config->sim_solver, opts->sim_solver, "sens_adj", &sens_adj_bkp);
+    config->sim_solver->opts_get(config->sim_solver, opts->sim_solver, "sens_hess", &sens_hess_bkp);
+
+    // compute only adjoint sensitivities
+    bool sens_tmp = false;
+    config->sim_solver->opts_set(config->sim_solver, opts->sim_solver, "sens_forw", &sens_tmp);
+    config->sim_solver->opts_set(config->sim_solver, opts->sim_solver, "sens_hess", &sens_tmp);
+    sens_tmp = true;
+    config->sim_solver->opts_set(config->sim_solver, opts->sim_solver, "sens_adj", &sens_tmp);
+
+    // call integrator
+    config->sim_solver->evaluate(config->sim_solver, work->sim_in, work->sim_out, opts->sim_solver,
+            mem->sim_solver, work->sim_solver);
+
+    // restore sens options
+    config->sim_solver->opts_set(config->sim_solver, opts->sim_solver, "sens_forw", &sens_forw_bkp);
+    config->sim_solver->opts_set(config->sim_solver, opts->sim_solver, "sens_adj", &sens_adj_bkp);
+    config->sim_solver->opts_set(config->sim_solver, opts->sim_solver, "sens_hess", &sens_hess_bkp);
+
+    // fun = integrator(x, u) - x[next_stage]
+    blasfeo_pack_dvec(nx1, work->sim_out->xn, 1, &mem->fun, 0);
+    blasfeo_daxpy(nx1, -1.0, ux1, nu1, &mem->fun, 0, &mem->fun, 0);
+
+    // pack adjoint
+    blasfeo_pack_dvec(nu, work->sim_out->S_adj+nx, 1, &mem->adj, 0);
+    blasfeo_pack_dvec(nx, work->sim_out->S_adj+0, 1, &mem->adj, nu);
+    blasfeo_dvecsc(nu+nx, -1.0, &mem->adj, 0);
+
+    // adj[nu+nx: nu+nx+nx1] = pi
+    blasfeo_dveccp(nx1, mem->pi, 0, &mem->adj, nu+nx);
+
+    return;
+}
+
+
+
 int ocp_nlp_dynamics_cont_precompute(void *config_, void *dims_, void *model_, void *opts_,
                                         void *mem_, void *work_)
 {
@@ -960,6 +1065,18 @@ int ocp_nlp_dynamics_cont_precompute(void *config_, void *dims_, void *model_, v
     return status;
 }
 
+
+void ocp_nlp_dynamics_cont_compute_jac_hess_p(void *config_, void *dims, void *model_, void *opts, void *mem, void *work_)
+{
+    printf("\nerror: ocp_nlp_dynamics_compute_jac_hess_p not implemented yet\n");
+    exit(1);
+}
+
+void ocp_nlp_dynamics_cont_compute_adj_p(void* config_, void *dims_, void *model_, void *opts_, void *mem_, struct blasfeo_dvec *out)
+{
+    printf("\nerror: ocp_nlp_dynamics_cont_compute_adj_p not implemented\n");
+    exit(1);
+}
 
 
 void ocp_nlp_dynamics_cont_config_initialize_default(void *config_)
@@ -993,12 +1110,17 @@ void ocp_nlp_dynamics_cont_config_initialize_default(void *config_)
     config->memory_set_sim_guess_ptr = &ocp_nlp_dynamics_cont_memory_set_sim_guess_ptr;
     config->memory_set_z_alg_ptr = &ocp_nlp_dynamics_cont_memory_set_z_alg_ptr;
     config->memory_get = &ocp_nlp_dynamics_cont_memory_get;
+    config->memory_get_params_grad = &ocp_nlp_dynamics_cont_memory_get_params_grad;
+    config->memory_get_params_lag_grad = &ocp_nlp_dynamics_cont_memory_get_params_lag_grad;
     config->workspace_calculate_size = &ocp_nlp_dynamics_cont_workspace_calculate_size;
     config->initialize = &ocp_nlp_dynamics_cont_initialize;
     config->update_qp_matrices = &ocp_nlp_dynamics_cont_update_qp_matrices;
     config->compute_fun = &ocp_nlp_dynamics_cont_compute_fun;
+    config->compute_fun_and_adj = &ocp_nlp_dynamics_cont_compute_fun_and_adj;
+    config->compute_adj_p = &ocp_nlp_dynamics_cont_compute_adj_p;
     config->precompute = &ocp_nlp_dynamics_cont_precompute;
     config->config_initialize_default = &ocp_nlp_dynamics_cont_config_initialize_default;
+    config->compute_jac_hess_p = &ocp_nlp_dynamics_cont_compute_jac_hess_p;
 
     return;
 }

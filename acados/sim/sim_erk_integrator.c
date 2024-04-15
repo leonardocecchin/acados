@@ -92,6 +92,10 @@ void sim_erk_dims_set(void *config_, void *dims_, const char *field, const int *
             exit(1);
         }
     }
+    else if (!strcmp(field, "np"))
+    {
+        // np dimension not needed
+    }
     else
     {
         printf("\nerror: sim_erk_dims_set: dim type not available: %s\n", field);
@@ -440,12 +444,8 @@ acados_size_t sim_erk_workspace_calculate_size(void *config_, void *dims_, void 
 
 
 
-static void *sim_erk_cast_workspace(void *config_, void *dims_, void *opts_, void *raw_memory, void *mem_)
+static void *sim_erk_cast_workspace(void *config_, sim_erk_dims *dims, sim_opts *opts, void *raw_memory, sim_erk_memory *mem)
 {
-    sim_opts *opts = opts_;
-    sim_erk_dims *dims = (sim_erk_dims *) dims_;
-    sim_erk_memory *mem = mem_;
-
     int ns = opts->ns;
 
     int nx = dims->nx;

@@ -139,6 +139,14 @@ add_test(NAME python_solution_sensitivities_and_exact_hess
         COMMAND "${CMAKE_COMMAND}" -E chdir ${PROJECT_SOURCE_DIR}/examples/acados_python/pendulum_on_cart/solution_sensitivities
         python test_solution_sens_and_exact_hess.py)
 
+add_test(NAME python_value_function_gradient
+        COMMAND "${CMAKE_COMMAND}" -E chdir ${PROJECT_SOURCE_DIR}/examples/acados_python/pendulum_on_cart/solution_sensitivities
+        python value_gradient_example.py)
+
+add_test(NAME python_policy_gradient
+        COMMAND "${CMAKE_COMMAND}" -E chdir ${PROJECT_SOURCE_DIR}/examples/acados_python/pendulum_on_cart/solution_sensitivities
+        python policy_gradient_example.py)
+
 add_test(NAME python_time_varying_irk
         COMMAND "${CMAKE_COMMAND}" -E chdir ${PROJECT_SOURCE_DIR}/examples/acados_python/time_varying
         python test_time_varying_irk.py)
@@ -233,6 +241,10 @@ add_test(NAME python_pendulum_ocp_cost_example
 add_test(NAME python_custom_update_example
         COMMAND "${CMAKE_COMMAND}" -E chdir ${PROJECT_SOURCE_DIR}/examples/acados_python/pendulum_on_cart/custom_update
         python example_custom_rti_loop.py)
+
+add_test(NAME python_as_rti_example
+        COMMAND "${CMAKE_COMMAND}" -E chdir ${PROJECT_SOURCE_DIR}/examples/acados_python/pendulum_on_cart/as_rti
+        python as_rti_closed_loop_example.py)
 
 add_test(NAME python_fast_zoro_example
         COMMAND "${CMAKE_COMMAND}" -E chdir ${PROJECT_SOURCE_DIR}/examples/acados_python/zoRO_example

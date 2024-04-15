@@ -44,8 +44,8 @@ def setup(x0, Fmax, N_horizon, Tf, RTI=False):
     model = export_pendulum_ode_model()
     ocp.model = model
 
-    nx = model.x.size()[0]
-    nu = model.u.size()[0]
+    nx = model.x.rows()
+    nu = model.u.rows()
     ny = nx + nu
     ny_e = nx
 
@@ -111,8 +111,8 @@ def main(use_RTI=False):
     nu = ocp_solver.acados_ocp.dims.nu
 
     Nsim = 100
-    simX = np.ndarray((Nsim+1, nx))
-    simU = np.ndarray((Nsim, nu))
+    simX = np.zeros((Nsim+1, nx))
+    simU = np.zeros((Nsim, nu))
 
     simX[0,:] = x0
 
@@ -172,7 +172,8 @@ def main(use_RTI=False):
         print(f'Computation time in ms: min {np.min(t):.3f} median {np.median(t):.3f} max {np.max(t):.3f}')
 
     # plot results
-    plot_pendulum(np.linspace(0, (Tf/N_horizon)*Nsim, Nsim+1), Fmax, simU, simX)
+    model = ocp_solver.acados_ocp.model
+    plot_pendulum(np.linspace(0, (Tf/N_horizon)*Nsim, Nsim+1), Fmax, simU, simX, latexify=False, time_label=model.t_label, x_labels=model.x_labels, u_labels=model.u_labels)
 
     ocp_solver = None
 

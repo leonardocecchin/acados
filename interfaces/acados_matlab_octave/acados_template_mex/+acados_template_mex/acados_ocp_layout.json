@@ -364,6 +364,12 @@
                 "nsh"
             ]
         ],
+        "idxsh_0": [
+            "ndarray",
+            [
+                "nsh_0"
+            ]
+        ],
         "lsh_e": [
             "ndarray",
             [
@@ -519,6 +525,13 @@
                 "ny"
             ]
         ],
+        "W_e": [
+            "ndarray",
+            [
+                "ny_e",
+                "ny_e"
+            ]
+        ],
         "Zl": [
             "ndarray",
             [
@@ -541,13 +554,6 @@
             "ndarray",
             [
                 "ns"
-            ]
-        ],
-        "W_e": [
-            "ndarray",
-            [
-                "ny_e",
-                "ny_e"
             ]
         ],
         "yref_0": [

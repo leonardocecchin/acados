@@ -28,13 +28,13 @@
 # POSSIBILITY OF SUCH DAMAGE.;
 #
 
-import os
 import matplotlib.pyplot as plt
 import numpy as np
 from acados_template import latexify_plot
 
 def plot_pendulum(shooting_nodes, u_max, U, X_true, X_est=None, Y_measured=None, latexify=True, plt_show=True, X_true_label=None,
-    states_lables = ['$x$', r'$\theta$', '$v$', r'$\dot{\theta}$']
+    states_lables = ['$x$', r'$\theta$', '$v$', r'$\dot{\theta}$'],
+    title = None
                   ):
     """
     Params:
@@ -69,7 +69,8 @@ def plot_pendulum(shooting_nodes, u_max, U, X_true, X_est=None, Y_measured=None,
         line.set_label(X_true_label)
     else:
         line.set_color('r')
-    plt.title('closed-loop simulation')
+    if title is not None:
+        plt.title(title)
     plt.ylabel('$u$')
     plt.xlabel('$t$')
     plt.hlines(u_max, t[0], t[-1], linestyles='dashed', alpha=0.7)
@@ -95,6 +96,3 @@ def plot_pendulum(shooting_nodes, u_max, U, X_true, X_est=None, Y_measured=None,
 
     plt.subplots_adjust(left=None, bottom=None, right=None, top=None, hspace=0.4)
 
-    # avoid plotting when running on Travis
-    if os.environ.get('ACADOS_ON_CI') is None and plt_show:
-        plt.show()

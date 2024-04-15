@@ -141,8 +141,10 @@ typedef struct
     struct blasfeo_dvec *z_alg;         ///< pointer to z in sim_out
     struct blasfeo_dmat *dzdux_tran;    ///< pointer to sensitivity of a wrt ux in sim_out
     struct blasfeo_dmat W_chol;        // cholesky factor of hessian of outer loss function
+    struct blasfeo_dvec W_chol_diag;   // cholesky factor of hessian of outer loss function if Hessian is diagonal
         // NOTE: could be in work, but needed for compatibility with NLS and cost integration
     double fun;                         ///< value of the cost function
+    double outer_hess_is_diag;
 } ocp_nlp_cost_conl_memory;
 
 //
@@ -196,6 +198,10 @@ void ocp_nlp_cost_conl_initialize(void *config_, void *dims, void *model_, void 
 void ocp_nlp_cost_conl_update_qp_matrices(void *config_, void *dims, void *model_, void *opts_, void *memory_, void *work_);
 //
 void ocp_nlp_cost_conl_compute_fun(void *config_, void *dims, void *model_, void *opts_, void *memory_, void *work_);
+//
+void ocp_nlp_cost_conl_compute_jac_p(void *config_, void *dims, void *model_, void *opts_, void *memory_, void *work_);
+//
+void ocp_nlp_cost_conl_eval_grad_p(void *config_, void *dims, void *model_, void *opts_, void *memory_, void *work_, struct blasfeo_dvec *out);
 
 #ifdef __cplusplus
 } /* extern "C" */

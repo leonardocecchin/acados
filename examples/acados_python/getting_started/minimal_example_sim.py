@@ -45,8 +45,8 @@ def main():
     sim.model = model
 
     Tf = 0.1
-    nx = model.x.size()[0]
-    nu = model.u.size()[0]
+    nx = model.x.rows()
+    nu = model.u.rows()
     N = 200
 
     # set simulation time
@@ -87,7 +87,7 @@ def main():
     print("S_forw, sensitivities of simulation result wrt x,u:\n", S_forw)
 
     # plot results
-    plot_pendulum(np.linspace(0, N*Tf, N+1), 10, np.repeat(u0, N), simX, latexify=False)
+    plot_pendulum(np.linspace(0, N*Tf, N+1), 10, np.repeat(u0, N), simX, latexify=False, time_label=model.t_label, x_labels=model.x_labels, u_labels=model.u_labels)
 
 
 if __name__ == "__main__":

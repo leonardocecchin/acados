@@ -624,6 +624,10 @@ int ocp_nlp_dims_get_from_attr(ocp_nlp_config *config, ocp_nlp_dims *dims, ocp_n
     {
         return dims->nz[stage];
     }
+    else if (!strcmp(field, "p"))
+    {
+        return dims->np[stage];
+    }
     else if (!strcmp(field, "lam") || !strcmp(field, "t"))
     {
         return 2*dims->ni[stage];
@@ -913,6 +917,10 @@ void ocp_nlp_cost_dims_get_from_attr(ocp_nlp_config *config, ocp_nlp_dims *dims,
         dims_out[0] = dims->nx[stage] + dims->nu[stage];
         dims_out[1] = dims->nx[stage] + dims->nu[stage];
     }
+    else if (!strcmp(field, "scaling"))
+    {
+        dims_out[0] = 1;
+    }
     else
     {
         printf("\nerror: ocp_nlp_cost_dims_get_from_attr: field %s not available\n", field);
@@ -1068,6 +1076,11 @@ void ocp_nlp_eval_param_sens(ocp_nlp_solver *solver, char *field, int stage, int
     return;
 }
 
+void ocp_nlp_eval_lagrange_grad_p(ocp_nlp_solver *solver, ocp_nlp_in *nlp_in, const char *field, double *out)
+{
+    solver->config->eval_lagr_grad_p(solver->config, solver->dims, nlp_in, solver->opts, solver->mem, solver->work, field, out);
+}
+
 
 void ocp_nlp_eval_residuals(ocp_nlp_solver *solver, ocp_nlp_in *nlp_in, ocp_nlp_out *nlp_out)
 {
@@ -1093,6 +1106,23 @@ void ocp_nlp_eval_cost(ocp_nlp_solver *solver, ocp_nlp_in *nlp_in, ocp_nlp_out *
 
     ocp_nlp_cost_compute(config, dims, nlp_in, nlp_out, nlp_opts, nlp_mem, nlp_work);
 }
+
+
+void ocp_nlp_eval_params_jac(ocp_nlp_solver *solver, ocp_nlp_in *nlp_in, ocp_nlp_out *nlp_out)
+{
+    ocp_nlp_config *config = solver->config;
+    ocp_nlp_memory *nlp_mem;
+    ocp_nlp_opts *nlp_opts;
+    ocp_nlp_workspace *nlp_work;
+    ocp_nlp_dims *dims = solver->dims;
+
+    config->get(config, solver->dims, solver->mem, "nlp_mem", &nlp_mem);
+    config->opts_get(config, solver->dims, solver->opts, "nlp_opts", &nlp_opts);
+    config->work_get(config, solver->dims, solver->work, "nlp_work", &nlp_work);
+
+    ocp_nlp_params_jac_compute(config, dims, nlp_in, nlp_opts, nlp_mem, nlp_work);
+}
+
 
 
 void ocp_nlp_get(ocp_nlp_config *config, ocp_nlp_solver *solver,
